@@ -1,0 +1,6 @@
+runtime: java11
+instance_class: F2
+
+# Memory limit, heap size
+# env_variables:
+#   JAVA_TOOL_OPTIONS: "-XX:MaxRAM=1024m -XX:ActiveProcessorCount=4 -Xmx1024m -XX:+UseSerialGC"

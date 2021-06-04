@@ -1,0 +1,114 @@
+spring:
+    config:
+        activate:
+            on-profile: prod
+logging:
+  level:
+    ROOT: INFO
+    com.jonathan: DEBUG
+    org.springframework: INFO
+    com.google.cloud: INFO
+
+appengine-deployment: true
+
+gmap:
+  local-api-key: "AIzaSyAfTaASVC0uiAlXFTpJaaLlJt_5T4G9Slo"
+
+graphbuilder:
+  maximum-bus-train-dist: 0.3
+  default-walking-speed: 0.08
+  bus:
+    default-speed: 0.37
+    default-stop-time: 0
+    speed-factor: 1.0
+  train:
+    mrt:
+      default-speed: 0.8
+      default-stop-time: 0.5
+      speed-factor: 0.7
+    lrt:
+      default-speed: 0.7
+      default-stop-time: 0
+      speed-factor: 0.7
+    transfer-time: 3.0
+    #Data exceptions: Names of stations that do not have IDs
+    name-to-ids:
+      '[jelapang lrt staion]': BP12
+      '[tuas crescent]': EW31
+      '[tuas crescent station]': EW31
+      '[tuas crescent mrt station]': EW31
+      '[tuas west mrt station]': EW32
+    #Stations under construction or out of operation
+    invalid-stations: ['CC18']
+    services:
+      CC: 
+        ascending: 'Circle Line (HarbourFront)'
+        descending: 'Circle Line (Dhoby Ghaut)'
+      NE: 
+        ascending: 'North East Line (Punggol)' 
+        descending: 'North East Line (HarbourFront)'
+      EW:
+        ascending: 'East West Line (Tuas Link)' 
+        descending: 'East West Line (Pasir Ris)'
+      NS:
+        ascending: 'North South Line (Marina South Pier)' 
+        descending: 'North South Line (Jurong East)'
+      DT:
+        ascending: 'Downtown Line (Expo)' 
+        descending: 'Downtown Line (Bukit Panjang)'
+      TE:
+        ascending: 'Thomson-East Coast Line (Changi Airport)' 
+        descending: 'Thomson-East Coast Line (Woodlands North)'
+      BP:
+        ascending: 'Bukit Panjang LRT (Service B)'
+        descending: 'Bukit Panjang LRT (Service A)'
+        straight-ascending: 'Bukit Panjang LRT (Towards Bukit Panjang)'
+        straight-descending: 'Bukit Panjang LRT (Towards Choa Chu Kang)'
+      SW:
+        ascending: 'Sengkang LRT (West Loop: B)'
+        descending: 'Sengkang LRT (West Loop: A)'
+      SE:
+        ascending: 'Sengkang LRT (East Loop: A)'
+        descending: 'Sengkang LRT (East Loop: B)'
+      PW:
+        ascending: 'Punggol LRT (West Loop: B)'
+        descending: 'Punggol LRT (West Loop: A)'
+      PE:
+        ascending: 'Punggol LRT (East Loop: A)'
+        descending: 'Punggol LRT (East Loop: B)'
+      
+    freq: [6,6,3,3]
+    #Regex expression for stations exempt from linear vertex creation
+    exclude-line-branch: '(^CE\d$)|(^CG\d$)'
+    exclude-line-loop: '(^BP\d{1,2}$)|(^STC$)|(^PTC$)|(^SE\d{1,2}$)|(^SW\d{1,2}$)|(^PE\d{1,2}$)|(^PW\d{1,2}$)' 
+    #Vertices added manually due to branching
+    branches: 
+      - branch-node: CC4
+        src: CE1
+        des: CE2
+        join: true   
+        transfer-time: 0
+        post-branch-service:
+          ascending: 'Circle Line (HarbourFront)'
+          descending: 'Circle Line (Dhoby Ghaut/Marina Bay)'
+        branch-service:
+          ascending: 'Circle Line (HarbourFront)'
+          descending: 'Circle Line (Marina Bay)'
+      - branch-node: EW4
+        src: CG1
+        des: CG2
+        join: true   
+        transfer-time: 3
+        post-branch-service:
+          ascending: 'East West Line (Tuas Link)' 
+          descending: 'East West Line (Pasir Ris/Changi Airport)'
+        branch-service:
+          ascending: 'East West Line (Tuas Link)' 
+          descending: 'East West Line (Changi Airport)'
+    loops:
+      - [PTC,PW1,PW7]
+      - [PTC,PE1,PE7]
+      - [STC,SW1,SW8]
+      - [PTC,SE1,SE5]
+      - [BP1,BP6,BP7,BP13]
+  

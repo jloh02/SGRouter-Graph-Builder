@@ -1,0 +1,53 @@
+plugins {
+	id 'org.springframework.boot' version '2.4.5'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+
+	id "io.freefair.lombok" version "6.0.0-m2"
+
+	id 'com.google.cloud.tools.appengine' version '2.4.1'
+}
+
+group = 'com.jonathan.sgrouter.graphbuilder'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+	maven { url "https://repo.osgeo.org/repository/release/" }
+	mavenCentral()
+}
+
+configurations.all {
+	exclude module: 'spring-boot-starter-logging'
+	//exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	
+	//compile("org.springframework.boot:spring-boot-devtools")
+
+	// https://mvnrepository.com/artifact/org.json/json
+	implementation group: 'org.json', name: 'json', version: '20210307'
+	// https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
+	implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.34.0'
+
+	// https://mvnrepository.com/artifact/org.geotools/gt-shapefile
+	implementation group: 'org.geotools', name: 'gt-shapefile', version: '25-RC'
+	// https://mvnrepository.com/artifact/org.geotools/gt-main
+	implementation group: 'org.geotools', name: 'gt-main', version: '25-RC'
+
+	// https://github.com/googlemaps/google-maps-services-java#Gradle
+	implementation group: 'com.google.maps', name: 'google-maps-services', version: '0.18.0'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+
+
+	implementation platform('com.google.cloud:libraries-bom:20.5.0')
+	compile 'com.google.cloud:google-cloud-datastore'
+	compile 'com.google.cloud:google-cloud-storage'
+}
+
+test {
+	useJUnitPlatform()
+}
