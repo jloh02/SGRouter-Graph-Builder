@@ -19,14 +19,11 @@ repositories {
 
 configurations.all {
 	exclude module: 'spring-boot-starter-logging'
-	//exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
 }
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	
-	//compile("org.springframework.boot:spring-boot-devtools")
 
 	// https://mvnrepository.com/artifact/org.json/json
 	implementation group: 'org.json', name: 'json', version: '20210307'

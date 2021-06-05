@@ -6,8 +6,6 @@ import com.jonathan.sgrouter.graphbuilder.utils.DatastoreHandler;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-import com.jonathan.sgrouter.graphbuilder.utils.DatastoreHandler;
-
 import lombok.Data;
 
 @Data

@@ -17,7 +17,7 @@ import com.jonathan.sgrouter.graphbuilder.builders.BusGraphBuilder;
 import com.jonathan.sgrouter.graphbuilder.builders.MrtGraphBuilder;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
-import com.jonathan.sgrouter.graphbuilder.models.DBVertex;
+import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.utils.CloudStorageHandler;
 import com.jonathan.sgrouter.graphbuilder.utils.SQLiteHandler;
@@ -45,7 +45,7 @@ public class GraphBuilderController {
 				timings[2].stopTime, timings[3].speed);
 
 		//Train-Bus Vertices
-		List<DBVertex> busTrainVtx = new ArrayList<>();
+		List<Vertex> busTrainVtx = new ArrayList<>();
 		try {
 			GeodeticCalculator gc = new GeodeticCalculator(CRS.parseWKT(Utils.getLatLonWKT()));
 			for (Node bus : busGraph) {
@@ -55,9 +55,9 @@ public class GraphBuilderController {
 					double dist = gc.getOrthodromicDistance() / 1000.0;
 					if (dist <= GraphBuilderApplication.config.graphbuilder.getMaximumBusTrainDist()) {
 						//System.out.println(String.format("%s <-> %s",bus.getName(),train.getName()));
-						busTrainVtx.add(new DBVertex(bus.getSrcKey(), train.getSrcKey(), "Walk (Bus-Train)",
+						busTrainVtx.add(new Vertex(bus.getSrcKey(), train.getSrcKey(), "Walk (Bus-Train)",
 								dist / timings[3].speed));
-						busTrainVtx.add(new DBVertex(train.getSrcKey(), bus.getSrcKey(), "Walk (Bus-Train)",
+						busTrainVtx.add(new Vertex(train.getSrcKey(), bus.getSrcKey(), "Walk (Bus-Train)",
 								dist / timings[3].speed));
 					}
 				}

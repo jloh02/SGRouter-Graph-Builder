@@ -12,19 +12,18 @@ import java.nio.file.Paths;
 
 public class CloudStorageHandler {
   final static String dbPath = GraphBuilderApplication.config.isAppengineDeployment() ? "/tmp/graph.db" : "graph.db";
-  final static String bucketName = "sg-router.appspot.com";
-  final static String objectName = "graph.db";
+  final static String bucket = "sg-router.appspot.com";
+  final static String filename = "graph.db";
 
   public static void uploadDB() {
-    Storage storage = StorageOptions.getDefaultInstance().getService();
-    BlobId blobId = BlobId.of(bucketName, objectName);
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+    Storage store = StorageOptions.getDefaultInstance().getService();
+    BlobInfo bInf = BlobInfo.newBuilder(BlobId.of(bucket, filename)).build();
     try {
-      storage.create(blobInfo, Files.readAllBytes(Paths.get(dbPath)));
+      store.create(bInf, Files.readAllBytes(Paths.get(dbPath)));
     } catch (IOException e) {
       System.err.println(e);
     }
 
-    System.out.println("File " + dbPath + " uploaded to bucket " + bucketName);
+    System.out.println("Uploaded graph.db");
   }
 }

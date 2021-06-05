@@ -13,7 +13,7 @@ import com.jonathan.sgrouter.graphbuilder.builders.datamall.DatamallSHP;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpNode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.models.BranchInfo;
-import com.jonathan.sgrouter.graphbuilder.models.DBVertex;
+import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.models.config.BranchConfig;
 import com.jonathan.sgrouter.graphbuilder.models.config.TrainServiceName;
@@ -45,7 +45,7 @@ public class MrtGraphBuilder {
 
 		/*----------------------Generate train network adjacency list----------------------*/
 		Set<String> srcList = new HashSet<>();
-		List<DBVertex> vtxList = new ArrayList<>();
+		List<Vertex> vtxList = new ArrayList<>();
 
 		List<ShpNode> stationsBaseName = new ArrayList<>();
 		Map<String, Integer> idxs = new HashMap<>();
@@ -123,7 +123,7 @@ public class MrtGraphBuilder {
 
 	//Linear Train Vertex Creation: Generates vertices on graph which are "straight lines"
 	//Branch Creation: Refer to branch-logic.txt
-	static void generateLinesAndBranches(List<ShpNode> stations, Map<String, Integer> idxs, List<DBVertex> vtxList,
+	static void generateLinesAndBranches(List<ShpNode> stations, Map<String, Integer> idxs, List<Vertex> vtxList,
 			Map<String, BranchInfo> branches, double mrtSpeed, double mrtStopTime, double lrtSpeed, double lrtStopTime,
 			double freq) {
 		int startIdx = 0;
@@ -182,8 +182,8 @@ public class MrtGraphBuilder {
 					double dist = cumDist.get(i - startIdx) - cumDist.get(j - startIdx) + freq;
 					TrainServiceName serv = currBranch == null ? BuilderUtils.getService(stations.get(i), stations.get(j))
 							: currBranch.getPostBranchService();
-					vtxList.add(new DBVertex(stations.get(i).getId(), stations.get(j).getId(), serv.descending, dist));
-					vtxList.add(new DBVertex(stations.get(j).getId(), stations.get(i).getId(), serv.ascending, dist));
+					vtxList.add(new Vertex(stations.get(i).getId(), stations.get(j).getId(), serv.descending, dist));
+					vtxList.add(new Vertex(stations.get(j).getId(), stations.get(i).getId(), serv.ascending, dist));
 				}
 
 				if (currBranch != null && currBranch.isJoin()) {
@@ -198,9 +198,9 @@ public class MrtGraphBuilder {
 						// 		stations.get(idxs.get(currBranch.nodes.get(j))).getId(), currBranch.cumDist.get(j),
 						// 		sumDist - preBranchDistance));
 						TrainServiceName serv = currBranch.getBranchService();
-						vtxList.add(new DBVertex(stations.get(i).getId(),
+						vtxList.add(new Vertex(stations.get(i).getId(),
 								stations.get(idxs.get(currBranch.nodes.get(j))).getId(), serv.descending, dist));
-						vtxList.add(new DBVertex(stations.get(idxs.get(currBranch.nodes.get(j))).getId(),
+						vtxList.add(new Vertex(stations.get(idxs.get(currBranch.nodes.get(j))).getId(),
 								stations.get(i).getId(), serv.ascending, dist));
 					}
 				}
@@ -217,7 +217,7 @@ public class MrtGraphBuilder {
 	}
 
 	//Cross Train Lines Interchanges
-	static void generateInterchanges(List<ShpNode> stations, List<ShpNode> stationsBaseName, List<DBVertex> vtxList,
+	static void generateInterchanges(List<ShpNode> stations, List<ShpNode> stationsBaseName, List<Vertex> vtxList,
 			double walkSpeed) {
 		for (int i = 1; i < stationsBaseName.size(); i++) {
 			for (int j = 0; j < i; j++) {
@@ -227,9 +227,9 @@ public class MrtGraphBuilder {
 					// 		+ BuilderUtils.getDistance(stations.get(i), stations.get(j)) + " " + walkSpeed);
 					double dist = BuilderUtils.getDistance(stations.get(i), stations.get(j)) / walkSpeed
 							+ GraphBuilderApplication.config.graphbuilder.train.getTransferTime();
-					vtxList.add(new DBVertex(stations.get(i).getId(), stations.get(j).getId(),
+					vtxList.add(new Vertex(stations.get(i).getId(), stations.get(j).getId(),
 							"Walk (Between Stations)", dist));
-					vtxList.add(new DBVertex(stations.get(j).getId(), stations.get(i).getId(),
+					vtxList.add(new Vertex(stations.get(j).getId(), stations.get(i).getId(),
 							"Walk (Between Stations)", dist));
 				}
 			}
@@ -237,7 +237,7 @@ public class MrtGraphBuilder {
 	}
 
 	//Loops in LRTs
-	static void generateLoops(List<ShpNode> stations, Map<String, Integer> idxs, List<DBVertex> vtxList,
+	static void generateLoops(List<ShpNode> stations, Map<String, Integer> idxs, List<Vertex> vtxList,
 			double mrtSpeed, double mrtStopTime, double lrtSpeed, double lrtStopTime, double freq) {
 		for (String[] loop : GraphBuilderApplication.config.graphbuilder.train.getLoops()) {
 			if (loop.length != 3 && loop.length != 4) {
@@ -288,9 +288,9 @@ public class MrtGraphBuilder {
 						// 	System.out.println(String.format("%s %s %f %f", nodes.get(j).getId(), nodes.get(i).getId(),
 						// 			dist, sumDist - dist));
 						vtxList.add(
-								new DBVertex(nodes.get(i).getId(), nodes.get(j).getId(), tsn.descending, dist + freq));
+								new Vertex(nodes.get(i).getId(), nodes.get(j).getId(), tsn.descending, dist + freq));
 						vtxList.add(
-								new DBVertex(nodes.get(j).getId(), nodes.get(i).getId(), tsn.ascending, dist + freq));
+								new Vertex(nodes.get(j).getId(), nodes.get(i).getId(), tsn.ascending, dist + freq));
 					}
 				}
 			} else if (loop.length == 4) {
@@ -313,9 +313,9 @@ public class MrtGraphBuilder {
 				for (int i = 0; i < straightNodes.size() - 1; i++) {
 					for (int j = i + 1; j < straightNodes.size(); j++) {
 						double dist = straightCumDist.get(j) - straightCumDist.get(i);
-						vtxList.add(new DBVertex(straightNodes.get(i).getId(), straightNodes.get(j).getId(),
+						vtxList.add(new Vertex(straightNodes.get(i).getId(), straightNodes.get(j).getId(),
 								tsn.straightAscending, dist));
-						vtxList.add(new DBVertex(straightNodes.get(j).getId(), straightNodes.get(i).getId(),
+						vtxList.add(new Vertex(straightNodes.get(j).getId(), straightNodes.get(i).getId(),
 								tsn.straightDescending, dist));
 					}
 				}
@@ -354,9 +354,9 @@ public class MrtGraphBuilder {
 						}
 
 						vtxList.add(
-								new DBVertex(loopNodes.get(i).getId(), loopNodes.get(j).getId(), servInc, dist + freq));
+								new Vertex(loopNodes.get(i).getId(), loopNodes.get(j).getId(), servInc, dist + freq));
 						vtxList.add(
-								new DBVertex(loopNodes.get(j).getId(), loopNodes.get(i).getId(), servDec, dist + freq));
+								new Vertex(loopNodes.get(j).getId(), loopNodes.get(i).getId(), servDec, dist + freq));
 
 						//Join loops to straight
 						if (i == 0) { // loop[1]
@@ -365,9 +365,9 @@ public class MrtGraphBuilder {
 								double straightDist = straightSumDist - straightCumDist.get(k);
 								// System.out.println(String.format("%s %s %f %f", loopNodes.get(j).getId(),
 								// 		straightNodes.get(k).getId(), dist, straightDist));
-								vtxList.add(new DBVertex(loopNodes.get(j).getId(), straightNodes.get(k).getId(),
+								vtxList.add(new Vertex(loopNodes.get(j).getId(), straightNodes.get(k).getId(),
 										servDec, dist + straightDist + freq));
-								vtxList.add(new DBVertex(straightNodes.get(k).getId(), loopNodes.get(j).getId(),
+								vtxList.add(new Vertex(straightNodes.get(k).getId(), loopNodes.get(j).getId(),
 										servInc, dist + straightDist + freq));
 							}
 						}
@@ -378,7 +378,7 @@ public class MrtGraphBuilder {
 		}
 	}
 
-	static void generateExits(List<ShpNode> stations, Map<String, Integer> idxs, List<DBVertex> vtxList,
+	static void generateExits(List<ShpNode> stations, Map<String, Integer> idxs, List<Vertex> vtxList,
 			List<ShpNode> exits, Set<String> usedExitIds, Set<String> exitStationIds, List<Node> exitNodeList,
 			List<Node> nodeList, double walkSpeed) {
 		for (ShpNode exit : exits) {
@@ -402,8 +402,8 @@ public class MrtGraphBuilder {
 			nodeList.add(addedNode);
 
 			double dist = BuilderUtils.getDistance(exit, stations.get(idxs.get(exit.getId()))) / walkSpeed;
-			vtxList.add(new DBVertex(exitId, exit.getId(), "Walk (Station-Exit)", dist));
-			vtxList.add(new DBVertex(exit.getId(), exitId, "Walk (Station-Exit)", dist));
+			vtxList.add(new Vertex(exitId, exit.getId(), "Walk (Station-Exit)", dist));
+			vtxList.add(new Vertex(exit.getId(), exitId, "Walk (Station-Exit)", dist));
 		}
 
 		//Handle stations without exits
@@ -414,9 +414,9 @@ public class MrtGraphBuilder {
 				exitNodeList.add(addedNode);
 				nodeList.add(addedNode);
 
-				vtxList.add(new DBVertex(exitId, s.getId(), "Walk (Station-Exit)",
+				vtxList.add(new Vertex(exitId, s.getId(), "Walk (Station-Exit)",
 						GraphBuilderApplication.config.graphbuilder.train.getTransferTime()));
-				vtxList.add(new DBVertex(s.getId(), exitId, "Walk (Station-Exit)",
+				vtxList.add(new Vertex(s.getId(), exitId, "Walk (Station-Exit)",
 						GraphBuilderApplication.config.graphbuilder.train.getTransferTime()));
 			}
 		}

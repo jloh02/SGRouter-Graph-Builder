@@ -13,7 +13,7 @@ import java.time.DayOfWeek;
 import com.jonathan.sgrouter.graphbuilder.utils.*;
 import com.jonathan.sgrouter.graphbuilder.builders.datamall.*;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
-import com.jonathan.sgrouter.graphbuilder.models.DBVertex;
+import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 
 public class BusGraphBuilder {
@@ -54,7 +54,7 @@ public class BusGraphBuilder {
 
 		/*----------------------Generate bus adjacency list----------------------*/
 		Set<String> srcList = new HashSet<>();
-		List<DBVertex> vtxList = new ArrayList<>();
+		List<Vertex> vtxList = new ArrayList<>();
 
 		ZonedDateTime sgNow = GraphBuilderApplication.sgNow;
 		
@@ -105,7 +105,7 @@ public class BusGraphBuilder {
 					continue;
 				double travelTime = (desRouteData.distance - srcRouteData.distance) / busSpeed + freq;
 
-				vtxList.add(new DBVertex(srcRouteData.src, desRouteData.src, srcRouteKey.service, travelTime));
+				vtxList.add(new Vertex(srcRouteData.src, desRouteData.src, srcRouteKey.service, travelTime));
 			}
 		}
 

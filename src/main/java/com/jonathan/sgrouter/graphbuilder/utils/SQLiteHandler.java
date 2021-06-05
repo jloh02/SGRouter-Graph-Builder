@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
-import com.jonathan.sgrouter.graphbuilder.models.DBVertex;
+import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 
 import java.io.File;
@@ -56,12 +56,12 @@ public class SQLiteHandler {
 		}
 	}
 
-	public void addVertices(List<DBVertex> vtxList) {
+	public void addVertices(List<Vertex> vtxList) {
 		try {
 			// ON CONFLICT: Use lower time (e.g. src=80199 service=11)
 			PreparedStatement ps = conn.prepareStatement(
 					"INSERT INTO vertex(src,des,service,time) VALUES(?,?,?,?) ON CONFLICT(src, des, service) DO UPDATE SET time=excluded.time WHERE excluded.time<vertex.time");
-			for (DBVertex v : vtxList) {
+			for (Vertex v : vtxList) {
 				ps.setString(1, v.getSrc());
 				ps.setString(2, v.getDes());
 				ps.setString(3, v.getService());
