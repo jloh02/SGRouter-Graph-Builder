@@ -57,7 +57,7 @@ public class GraphBuilderController {
 						//System.out.println(String.format("%s <-> %s",bus.getName(),train.getName()));
 						busTrainVtx.add(new Vertex(bus.getSrcKey(), train.getSrcKey(), "Walk (Bus-Train)",
 								dist / timings[3].speed));
-						busTrainVtx.add(new Vertex(train.getSrcKey(), bus.getSrcKey(), "Walk (Bus-Train)",
+						busTrainVtx.add(new Vertex(train.getSrcKey(), bus.getSrcKey(), "Walk (Train-Bus)",
 								dist / timings[3].speed));
 					}
 				}

@@ -228,9 +228,9 @@ public class MrtGraphBuilder {
 					double dist = BuilderUtils.getDistance(stations.get(i), stations.get(j)) / walkSpeed
 							+ GraphBuilderApplication.config.graphbuilder.train.getTransferTime();
 					vtxList.add(new Vertex(stations.get(i).getId(), stations.get(j).getId(),
-							"Walk (Between Stations)", dist));
+							"Walk (Train Interchange)", dist));
 					vtxList.add(new Vertex(stations.get(j).getId(), stations.get(i).getId(),
-							"Walk (Between Stations)", dist));
+							"Walk (Train Interchange)", dist));
 				}
 			}
 		}
@@ -402,7 +402,7 @@ public class MrtGraphBuilder {
 			nodeList.add(addedNode);
 
 			double dist = BuilderUtils.getDistance(exit, stations.get(idxs.get(exit.getId()))) / walkSpeed;
-			vtxList.add(new Vertex(exitId, exit.getId(), "Walk (Station-Exit)", dist));
+			vtxList.add(new Vertex(exitId, exit.getId(), "Walk (Exit-Station)", dist));
 			vtxList.add(new Vertex(exit.getId(), exitId, "Walk (Station-Exit)", dist));
 		}
 
@@ -414,7 +414,7 @@ public class MrtGraphBuilder {
 				exitNodeList.add(addedNode);
 				nodeList.add(addedNode);
 
-				vtxList.add(new Vertex(exitId, s.getId(), "Walk (Station-Exit)",
+				vtxList.add(new Vertex(exitId, s.getId(), "Walk (Exit-Station)",
 						GraphBuilderApplication.config.graphbuilder.train.getTransferTime()));
 				vtxList.add(new Vertex(s.getId(), exitId, "Walk (Station-Exit)",
 						GraphBuilderApplication.config.graphbuilder.train.getTransferTime()));
