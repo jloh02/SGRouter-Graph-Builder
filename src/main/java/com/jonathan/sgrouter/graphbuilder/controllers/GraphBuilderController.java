@@ -20,6 +20,7 @@ import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
 import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.utils.CloudStorageHandler;
+import com.jonathan.sgrouter.graphbuilder.utils.DatastoreHandler;
 import com.jonathan.sgrouter.graphbuilder.utils.SQLiteHandler;
 import com.jonathan.sgrouter.graphbuilder.utils.Utils;
 
@@ -40,6 +41,7 @@ public class GraphBuilderController {
 		GraphBuilderApplication.sgNow = serverNow.withZoneSameInstant(ZoneId.of("Asia/Singapore"));
 		
 		GmapTiming[] timings = calibrateSpeeds();
+		DatastoreHandler.setWalkSpeed(timings[3].speed);
 		List<Node> busGraph = BusGraphBuilder.build(sqh, timings[0].speed, timings[0].stopTime);
 		List<Node> trainGraph = MrtGraphBuilder.build(sqh, timings[1].speed, timings[1].stopTime, timings[2].speed,
 				timings[2].stopTime, timings[3].speed);

@@ -11,16 +11,24 @@ import com.google.cloud.datastore.Key;
 public class DatastoreHandler {
 	final static Map<String,String> values = new HashMap<>(); 
 	final static Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-	final static String kind = "keys";
 
 	public static String getValue(String name) {
 		if(values.containsKey(name)) return values.get(name);
-		return connect(name);
+		return getKey(name);
 	}
 
-	static String connect(String name){
+	public static void setWalkSpeed(double speed){
+		Key taskKey = datastore.newKeyFactory().setNamespace("sgrouter").setKind("constants").newKey("walkSpeed");
+		Entity task = Entity.newBuilder(taskKey)
+		.set("value", speed)
+		.build();
+		datastore.put(task);
+
+	}
+
+	static String getKey(String name){
 		try {
-			Key taskKey = datastore.newKeyFactory().setNamespace("sgrouter").setKind(kind).newKey(name);
+			Key taskKey = datastore.newKeyFactory().setNamespace("sgrouter").setKind("keys").newKey(name);
 			Entity retrieved = datastore.get(taskKey);
 			values.put(name,retrieved.getString("value"));
 			return values.get(name);
