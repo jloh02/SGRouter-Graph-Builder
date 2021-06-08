@@ -57,7 +57,6 @@ public class BusGraphBuilder {
 		List<Vertex> vtxList = new ArrayList<>();
 
 		ZonedDateTime sgNow = GraphBuilderApplication.sgNow;
-		
 		for (int i = 0; i < sortedBusRoutes.size(); i++) {
 			BusRouteKey srcRouteKey = sortedBusRoutes.get(i);
 			BusRoute srcRouteData = importedBusRoutes.get(srcRouteKey);
@@ -66,7 +65,7 @@ public class BusGraphBuilder {
 			//if(srcRouteKey.service.equals("11")) System.out.println(String.format("%s %s",srcRouteKey,srcRouteData));
 
 			//Handles abnormal cases such as CTE expressway as a "node"
-			if (!Utils.isBusStop(srcRouteData.src)) 
+			if (!Utils.isBusStop(srcRouteData.src))
 				continue;
 
 			srcList.add(srcRouteData.src);
@@ -92,15 +91,20 @@ public class BusGraphBuilder {
 				firstBus = getFirstLastBusDT(sgNow, srcRouteData.WD_first);
 				lastBus = getFirstLastBusDT(sgNow, srcRouteData.WD_last);
 			}
+			if (firstBus.isAfter(lastBus))
+				lastBus = lastBus.plusDays(1); //Handle for lastBus after 00:00
 			if (sgNow.isBefore(firstBus) || sgNow.isAfter(lastBus))
 				continue;
 
 			double freq = Utils.getFreq(srcServiceData.getFreqArr());
+			if (freq < 0)
+				continue; //Service not available during non-peak but still within first/last bus range
 
 			for (int j = i + 1; j < sortedBusRoutes.size() && sortedBusRoutes.get(j).direction == srcRouteKey.direction
 					&& sortedBusRoutes.get(j).service.equals(srcRouteKey.service); j++) {
 				BusRouteKey desRouteKey = sortedBusRoutes.get(j);
 				BusRoute desRouteData = importedBusRoutes.get(desRouteKey);
+
 				if (!Utils.isBusStop(desRouteData.src))
 					continue;
 				double travelTime = (desRouteData.distance - srcRouteData.distance) / busSpeed + freq;
