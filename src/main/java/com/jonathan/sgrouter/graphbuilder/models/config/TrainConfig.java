@@ -1,19 +1,19 @@
 package com.jonathan.sgrouter.graphbuilder.models.config;
 
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
 import lombok.Data;
 
 @Data
 public class TrainConfig {
   public DefaultTiming mrt, lrt;
-  Map<String, String> nameToIds;
-  Map<String, TrainServiceName> services;
+  HashMap<String, String> nameToIds;
+  HashMap<String, TrainServiceName> services;
   String excludeLineBranch, excludeLineLoop;
   double transferTime;
-  List<BranchConfig> branches;
-  List<String> invalidStations;
-  List<String[]> loops;
+  ArrayList<BranchConfig> branches;
+  ArrayList<String> invalidStations;
+  ArrayList<String[]> loops;
   double[] freq;
 
   public String getExcludeLine() {

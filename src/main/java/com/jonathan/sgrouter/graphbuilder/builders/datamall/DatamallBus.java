@@ -6,7 +6,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,7 +13,7 @@ import org.json.JSONObject;
 
 @Slf4j
 public abstract class DatamallBus<T1, T2> {
-  Map<T1, T2> output;
+  HashMap<T1, T2> output;
 
   abstract String initDatamallType();
 
@@ -36,7 +35,7 @@ public abstract class DatamallBus<T1, T2> {
     return new JSONObject();
   }
 
-  public Map<T1, T2> getBusData() {
+  public HashMap<T1, T2> getBusData() {
     String datamallType = initDatamallType();
     output = new HashMap<T1, T2>();
     JSONObject json;

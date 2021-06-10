@@ -5,12 +5,11 @@ import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
 import java.util.HashMap;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DatastoreHandler {
-  static final Map<String, String> values = new HashMap<>();
+  static final HashMap<String, String> values = new HashMap<>();
   static final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
   public static String getValue(String name) {

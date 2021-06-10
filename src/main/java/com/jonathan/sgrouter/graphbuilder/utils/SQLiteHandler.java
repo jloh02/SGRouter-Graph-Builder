@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -42,7 +42,7 @@ public class SQLiteHandler {
     }
   }
 
-  public void addNodes(List<Node> nodeList) {
+  public void addNodes(ArrayList<Node> nodeList) {
     try {
       PreparedStatement ps =
           conn.prepareStatement("INSERT INTO nodes(src,name,lat,lon) VALUES(?,?,?,?)");
@@ -58,7 +58,7 @@ public class SQLiteHandler {
     }
   }
 
-  public void addVertices(List<Vertex> vtxList) {
+  public void addVertices(ArrayList<Vertex> vtxList) {
     try {
       // ON CONFLICT: Use lower time (e.g. src=80199 service=11)
       PreparedStatement ps =

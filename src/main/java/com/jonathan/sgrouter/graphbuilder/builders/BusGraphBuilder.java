@@ -10,19 +10,17 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BusGraphBuilder {
-  public static List<Node> build(
+  public static ArrayList<Node> build(
       SQLiteHandler sqh, double busSpeed, double busStopTime) { // Bus speed in km per minute
     /*----------------------Import data from Datamall----------------------*/
-    Map<String, BusStop> importedBusStops = new BusStopData().getBusData();
-    Map<BusServiceKey, BusService> importedBusServices = new BusServiceData().getBusData();
-    Map<BusRouteKey, BusRoute> importedBusRoutes = new BusRouteData().getBusData();
+    HashMap<String, BusStop> importedBusStops = new BusStopData().getBusData();
+    HashMap<BusServiceKey, BusService> importedBusServices = new BusServiceData().getBusData();
+    HashMap<BusRouteKey, BusRoute> importedBusRoutes = new BusRouteData().getBusData();
 
     // log.trace(importedBusStops.toString().substring(0,1000));
     // log.trace(importedBusServices.toString().substring(0,1000));
@@ -39,11 +37,11 @@ public class BusGraphBuilder {
     // log.trace("----------------");
 
     /*----------------------Generate list of sorted keys for iteration----------------------*/
-    List<String> sortedBusStops = new ArrayList<>(importedBusStops.keySet());
+    ArrayList<String> sortedBusStops = new ArrayList<>(importedBusStops.keySet());
     Collections.sort(sortedBusStops);
-    List<BusServiceKey> sortedBusServices = new ArrayList<>(importedBusServices.keySet());
+    ArrayList<BusServiceKey> sortedBusServices = new ArrayList<>(importedBusServices.keySet());
     Collections.sort(sortedBusServices);
-    List<BusRouteKey> sortedBusRoutes = new ArrayList<>(importedBusRoutes.keySet());
+    ArrayList<BusRouteKey> sortedBusRoutes = new ArrayList<>(importedBusRoutes.keySet());
     Collections.sort(sortedBusRoutes);
 
     // log.trace(sortedBusStops.toString().substring(0, 100));
@@ -51,8 +49,8 @@ public class BusGraphBuilder {
     // log.trace(sortedBusRoutes.toString().substring(0, 1000));
 
     /*----------------------Generate bus adjacency list----------------------*/
-    Set<String> srcList = new HashSet<>();
-    List<Vertex> vtxList = new ArrayList<>();
+    HashSet<String> srcList = new HashSet<>();
+    ArrayList<Vertex> vtxList = new ArrayList<>();
 
     ZonedDateTime sgNow = GraphBuilderApplication.sgNow;
     for (int i = 0; i < sortedBusRoutes.size(); i++) {
@@ -109,7 +107,7 @@ public class BusGraphBuilder {
     }
 
     /*----------------------Generate output: Bus coordinates list----------------------*/
-    List<Node> nodeList = new ArrayList<>();
+    ArrayList<Node> nodeList = new ArrayList<>();
     for (String src : srcList) {
       BusStop bsData = importedBusStops.get(src);
       nodeList.add(new Node(src, bsData.description, bsData.lat, bsData.lon));

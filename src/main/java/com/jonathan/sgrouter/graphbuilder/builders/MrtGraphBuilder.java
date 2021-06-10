@@ -15,9 +15,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
@@ -26,18 +23,18 @@ import org.opengis.referencing.FactoryException;
 @Slf4j
 public class MrtGraphBuilder {
   static GeodeticCalculator geoCalc;
-  static Map<String, TrainServiceName> serviceMap =
+  static HashMap<String, TrainServiceName> serviceMap =
       new HashMap<>(GraphBuilderApplication.config.graphbuilder.train.getServices());
 
-  public static List<Node> build(
+  public static ArrayList<Node> build(
       SQLiteHandler sqh,
       double mrtSpeed,
       double mrtStopTime,
       double lrtSpeed,
       double lrtStopTime,
       double walkSpeed) { // MRT speed in km per minute
-    List<ShpNode> stations = DatamallSHP.getSHP("TrainStation");
-    List<ShpNode> exits = DatamallSHP.getSHP("TrainStationExit");
+    ArrayList<ShpNode> stations = DatamallSHP.getSHP("TrainStation");
+    ArrayList<ShpNode> exits = DatamallSHP.getSHP("TrainStationExit");
 
     stations.removeIf(x -> !Utils.isInService(x.getId()));
     exits.removeIf(x -> !Utils.isInService(x.getId()));
@@ -49,13 +46,13 @@ public class MrtGraphBuilder {
     // log.trace(exits);
 
     /*----------------------Generate train network adjacency list----------------------*/
-    Set<String> srcList = new HashSet<>();
-    List<Vertex> vtxList = new ArrayList<>();
+    HashSet<String> srcList = new HashSet<>();
+    ArrayList<Vertex> vtxList = new ArrayList<>();
 
-    List<ShpNode> stationsBaseName = new ArrayList<>();
-    Map<String, Integer> idxs = new HashMap<>();
+    ArrayList<ShpNode> stationsBaseName = new ArrayList<>();
+    HashMap<String, Integer> idxs = new HashMap<>();
 
-    Map<String, BranchInfo> branches = new HashMap<>();
+    HashMap<String, BranchInfo> branches = new HashMap<>();
 
     double freq = Utils.getFreq(GraphBuilderApplication.config.graphbuilder.train.getFreq());
     freq *= 0.5;
@@ -72,7 +69,7 @@ public class MrtGraphBuilder {
       log.error(e.getMessage());
     }
     /*----------------------Generate output: Station coordinates list----------------------*/
-    List<Node> nodeList = new ArrayList<>();
+    ArrayList<Node> nodeList = new ArrayList<>();
     for (String src : srcList) {
       ShpNode stationData = stations.get(idxs.get(src));
       nodeList.add(
@@ -80,9 +77,9 @@ public class MrtGraphBuilder {
     }
 
     /*----------------------Handle Exit vertices while adding to Station Exit coordinates list----------------------*/
-    Set<String> usedExitIds = new HashSet<>();
-    Set<String> exitStationIds = new HashSet<>();
-    List<Node> exitNodeList = new ArrayList<>();
+    HashSet<String> usedExitIds = new HashSet<>();
+    HashSet<String> exitStationIds = new HashSet<>();
+    ArrayList<Node> exitNodeList = new ArrayList<>();
 
     generateExits(
         stations,
@@ -106,17 +103,17 @@ public class MrtGraphBuilder {
 
   // Branch setup (Refer to branch-logic.txt)
   static void setupBranches(
-      Map<String, BranchInfo> branches,
-      List<ShpNode> stations,
-      Map<String, Integer> idxs,
+      HashMap<String, BranchInfo> branches,
+      ArrayList<ShpNode> stations,
+      HashMap<String, Integer> idxs,
       double mrtSpeed,
       double mrtStopTime,
       double lrtSpeed,
       double lrtStopTime) {
     for (BranchConfig bc : GraphBuilderApplication.config.graphbuilder.train.getBranches()) {
       double sum = 0;
-      List<Double> cumu = new ArrayList<>();
-      List<String> branchNodes = new ArrayList<>();
+      ArrayList<Double> cumu = new ArrayList<>();
+      ArrayList<String> branchNodes = new ArrayList<>();
       cumu.add(0.0);
       if (!idxs.containsKey(bc.getSrc()) || !idxs.containsKey(bc.getDes())) continue;
       branchNodes.add(stations.get(idxs.get(bc.getSrc())).getId());
@@ -147,10 +144,10 @@ public class MrtGraphBuilder {
   }
 
   static void setupData(
-      List<ShpNode> stations,
-      Map<String, Integer> idxs,
-      List<ShpNode> stationsBaseName,
-      Set<String> srcList) {
+      ArrayList<ShpNode> stations,
+      HashMap<String, Integer> idxs,
+      ArrayList<ShpNode> stationsBaseName,
+      HashSet<String> srcList) {
     for (int i = 0; i < stations.size(); i++) {
       idxs.put(stations.get(i).getId(), i);
       srcList.add(stations.get(i).getId());
@@ -161,10 +158,10 @@ public class MrtGraphBuilder {
   // Linear Train Vertex Creation: Generates vertices on graph which are "straight lines"
   // Branch Creation: Refer to branch-logic.txt
   static void generateLinesAndBranches(
-      List<ShpNode> stations,
-      Map<String, Integer> idxs,
-      List<Vertex> vtxList,
-      Map<String, BranchInfo> branches,
+      ArrayList<ShpNode> stations,
+      HashMap<String, Integer> idxs,
+      ArrayList<Vertex> vtxList,
+      HashMap<String, BranchInfo> branches,
       double mrtSpeed,
       double mrtStopTime,
       double lrtSpeed,
@@ -176,7 +173,7 @@ public class MrtGraphBuilder {
     BranchInfo currBranch = null;
     double preBranchDistance = 0;
 
-    List<Double> cumDist =
+    ArrayList<Double> cumDist =
         new ArrayList<>(); // Cumulative sum array to calculate distance between 2 points
     cumDist.add(0.0);
     while (stations
@@ -287,9 +284,9 @@ public class MrtGraphBuilder {
 
   // Cross Train Lines Interchanges
   static void generateInterchanges(
-      List<ShpNode> stations,
-      List<ShpNode> stationsBaseName,
-      List<Vertex> vtxList,
+      ArrayList<ShpNode> stations,
+      ArrayList<ShpNode> stationsBaseName,
+      ArrayList<Vertex> vtxList,
       double walkSpeed) {
     for (int i = 1; i < stationsBaseName.size(); i++) {
       for (int j = 0; j < i; j++) {
@@ -317,9 +314,9 @@ public class MrtGraphBuilder {
 
   // Loops in LRTs
   static void generateLoops(
-      List<ShpNode> stations,
-      Map<String, Integer> idxs,
-      List<Vertex> vtxList,
+      ArrayList<ShpNode> stations,
+      HashMap<String, Integer> idxs,
+      ArrayList<Vertex> vtxList,
       double mrtSpeed,
       double mrtStopTime,
       double lrtSpeed,
@@ -341,10 +338,10 @@ public class MrtGraphBuilder {
       if (loop.length == 3) {
 
         // Build loop node list and cumulative sum array
-        List<ShpNode> nodes = new ArrayList<>();
+        ArrayList<ShpNode> nodes = new ArrayList<>();
         nodes.add(stations.get(idxs.get(loop[0])));
         double sumDist = 0.0;
-        List<Double> cumDist = new ArrayList<>();
+        ArrayList<Double> cumDist = new ArrayList<>();
         cumDist.add(0.0);
         sumDist +=
             BuilderUtils.getDistance(
@@ -379,10 +376,10 @@ public class MrtGraphBuilder {
         }
       } else if (loop.length == 4) {
         // Build straight node list and cumulative sum array
-        List<ShpNode> straightNodes = new ArrayList<>();
+        ArrayList<ShpNode> straightNodes = new ArrayList<>();
 
         double sumDist = 0.0;
-        List<Double> straightCumDist = new ArrayList<>();
+        ArrayList<Double> straightCumDist = new ArrayList<>();
         straightCumDist.add(0.0);
         straightNodes.add(stations.get(idxs.get(loop[0])));
         for (int i = idxs.get(loop[0]) + 1; i <= idxs.get(loop[1]); i++) {
@@ -414,11 +411,11 @@ public class MrtGraphBuilder {
         }
 
         // Build loop node list and cumulative sum array
-        List<ShpNode> loopNodes = new ArrayList<>();
+        ArrayList<ShpNode> loopNodes = new ArrayList<>();
 
         loopNodes.add(stations.get(idxs.get(loop[1])));
         sumDist = 0.0;
-        List<Double> loopCumDist = new ArrayList<>();
+        ArrayList<Double> loopCumDist = new ArrayList<>();
         loopCumDist.add(0.0);
         sumDist +=
             BuilderUtils.getDistance(
@@ -488,14 +485,14 @@ public class MrtGraphBuilder {
   }
 
   static void generateExits(
-      List<ShpNode> stations,
-      Map<String, Integer> idxs,
-      List<Vertex> vtxList,
-      List<ShpNode> exits,
-      Set<String> usedExitIds,
-      Set<String> exitStationIds,
-      List<Node> exitNodeList,
-      List<Node> nodeList,
+      ArrayList<ShpNode> stations,
+      HashMap<String, Integer> idxs,
+      ArrayList<Vertex> vtxList,
+      ArrayList<ShpNode> exits,
+      HashSet<String> usedExitIds,
+      HashSet<String> exitStationIds,
+      ArrayList<Node> exitNodeList,
+      ArrayList<Node> nodeList,
       double walkSpeed) {
     for (ShpNode exit : exits) {
       exitStationIds.add(exit.getId());

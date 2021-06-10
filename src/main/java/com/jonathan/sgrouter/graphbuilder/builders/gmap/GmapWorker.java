@@ -4,12 +4,11 @@ import com.google.maps.model.LatLng;
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GmapWorker {
-  List<String> srcList = new ArrayList<>(),
+  ArrayList<String> srcList = new ArrayList<>(),
       desList = new ArrayList<>(),
       servList = new ArrayList<>();
   GmapTiming defaultTiming;

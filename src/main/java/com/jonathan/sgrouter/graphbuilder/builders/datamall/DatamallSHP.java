@@ -1,6 +1,5 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
-
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpNode;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpParser;
@@ -17,9 +16,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -32,7 +31,7 @@ public class DatamallSHP {
   static String filename = "";
 
   // Returns path to SHP-related files with filenames without extension
-  public static List<ShpNode> getSHP(String layerID) {
+  public static ArrayList<ShpNode> getSHP(String layerID) {
     fileDir = GraphBuilderApplication.config.appengineDeployment ? "/tmp/" + layerID : layerID;
     filename = fileDir + ".zip";
 
@@ -43,7 +42,7 @@ public class DatamallSHP {
     String[] shpFiles = new File(dir).list();
     String baseName = shpFiles[0].split("\\.")[0];
 
-    List<ShpNode> out =
+    ArrayList<ShpNode> out =
         ShpParser.parse(String.format("%s/%s", dir, baseName), layerID.equals("TrainStationExit"));
 
     deleteTmpFiles();

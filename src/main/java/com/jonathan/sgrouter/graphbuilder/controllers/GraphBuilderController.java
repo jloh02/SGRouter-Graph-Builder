@@ -15,7 +15,6 @@ import com.jonathan.sgrouter.graphbuilder.utils.Utils;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
@@ -43,8 +42,8 @@ public class GraphBuilderController {
     DatastoreHandler.setWalkSpeed(timings[3].speed);
 
     //TODO Multithread bulding each graph
-    List<Node> busGraph = BusGraphBuilder.build(sqh, timings[0].speed, timings[0].stopTime);
-    List<Node> trainGraph =
+    ArrayList<Node> busGraph = BusGraphBuilder.build(sqh, timings[0].speed, timings[0].stopTime);
+    ArrayList<Node> trainGraph =
         MrtGraphBuilder.build(
             sqh,
             timings[1].speed,
@@ -54,7 +53,7 @@ public class GraphBuilderController {
             timings[3].speed);
 
     // Train-Bus Vertices
-    List<Vertex> busTrainVtx = new ArrayList<>();
+    ArrayList<Vertex> busTrainVtx = new ArrayList<>();
     try {
       GeodeticCalculator gc = new GeodeticCalculator(CRS.parseWKT(Utils.getLatLonWKT()));
       for (Node bus : busGraph) {

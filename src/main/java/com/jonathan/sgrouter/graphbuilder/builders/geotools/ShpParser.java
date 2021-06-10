@@ -7,8 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
@@ -27,9 +27,9 @@ import org.opengis.referencing.operation.MathTransform;
 
 @Slf4j
 public class ShpParser {
-  public static List<ShpNode> parse(
+  public static ArrayList<ShpNode> parse(
       String filename, boolean trainExit) { // Filename excludes extension
-    List<ShpNode> output = new ArrayList<>();
+    ArrayList<ShpNode> output = new ArrayList<>();
     try {
       CoordinateReferenceSystem crs =
           CRS.parseWKT(
