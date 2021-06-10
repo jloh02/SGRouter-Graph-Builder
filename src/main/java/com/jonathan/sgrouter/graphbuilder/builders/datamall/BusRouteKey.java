@@ -1,37 +1,35 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
 public class BusRouteKey implements Comparable<BusRouteKey> {
-	public String service;
-	public int direction, stopSequence;
+  public String service;
+  public int direction, stopSequence;
 
-	public BusRouteKey(String service, int direction, int stopSequence) {
-		this.service = service;
-		this.direction = direction;
-		this.stopSequence = stopSequence;
-	}
+  public BusRouteKey(String service, int direction, int stopSequence) {
+    this.service = service;
+    this.direction = direction;
+    this.stopSequence = stopSequence;
+  }
 
-	public String toString() {
-		return String.format("%s(%s):%s", service, direction, stopSequence);
-	}
+  public String toString() {
+    return String.format("%s(%s):%s", service, direction, stopSequence);
+  }
 
-	//Set default sorter
-	@Override
-	public int compareTo(final BusRouteKey k2) {
-		if (!this.service.equals(k2.service))
-			return this.service.compareTo(k2.service);
-		if (this.direction != k2.direction)
-			return this.direction - k2.direction;
-		return this.stopSequence - k2.stopSequence;
-	}
+  // Set default sorter
+  @Override
+  public int compareTo(final BusRouteKey k2) {
+    if (!this.service.equals(k2.service)) return this.service.compareTo(k2.service);
+    if (this.direction != k2.direction) return this.direction - k2.direction;
+    return this.stopSequence - k2.stopSequence;
+  }
 
-	// To use object as Map key
-	@Override
-	public int hashCode() {
-		return this.toString().hashCode();
-	}
+  // To use object as Map key
+  @Override
+  public int hashCode() {
+    return this.toString().hashCode();
+  }
 
-	@Override
-	public boolean equals(Object o) {
-		return this.toString().equals(o.toString());
-	}
+  @Override
+  public boolean equals(Object o) {
+    return this.toString().equals(o.toString());
+  }
 }

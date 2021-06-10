@@ -1,14 +1,13 @@
 package com.jonathan.sgrouter.graphbuilder.models.config;
 
-import org.springframework.stereotype.Component;
-
 import lombok.Data;
+import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class BranchConfig{
-	String branchNode, src, des;
-	boolean join;
-	double transferTime;
-	TrainServiceName postBranchService,branchService;
+public class BranchConfig {
+  String branchNode, src, des;
+  boolean join;
+  double transferTime;
+  TrainServiceName postBranchService, branchService;
 }

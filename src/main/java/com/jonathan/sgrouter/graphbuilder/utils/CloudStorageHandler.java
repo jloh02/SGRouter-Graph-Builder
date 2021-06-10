@@ -5,15 +5,17 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class CloudStorageHandler {
-  final static String dbPath = GraphBuilderApplication.config.isAppengineDeployment() ? "/tmp/graph.db" : "graph.db";
-  final static String bucket = "sg-router.appspot.com";
-  final static String filename = "graph.db";
+  static final String dbPath =
+      GraphBuilderApplication.config.isAppengineDeployment() ? "/tmp/graph.db" : "graph.db";
+  static final String bucket = "sg-router.appspot.com";
+  static final String filename = "graph.db";
 
   public static void uploadDB() {
     Storage store = StorageOptions.getDefaultInstance().getService();
@@ -21,9 +23,9 @@ public class CloudStorageHandler {
     try {
       store.create(bInf, Files.readAllBytes(Paths.get(dbPath)));
     } catch (IOException e) {
-      System.err.println(e);
+      log.error(e.getMessage());
     }
 
-    System.out.println("Uploaded graph.db");
+    log.debug("Uploaded graph.db");
   }
 }

@@ -1,13 +1,16 @@
 spring:
-    config:
-        activate:
-            on-profile: prod
+  config:
+    activate:
+      on-profile: prod
+  output:
+    ansi:
+      enabled: ALWAYS
 logging:
   level:
-    ROOT: INFO
-    com.jonathan: DEBUG
+    com.jonathan: TRACE
     org.springframework: INFO
-    com.google.cloud: INFO
+    com.zaxxer.hikari: WARN
+    com.google.cloud: WARN
 
 appengine-deployment: true
 

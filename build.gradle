@@ -17,10 +17,6 @@ repositories {
 	mavenCentral()
 }
 
-configurations.all {
-	exclude module: 'spring-boot-starter-logging'
-}
-
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -37,8 +33,6 @@ dependencies {
 
 	// https://github.com/googlemaps/google-maps-services-java#Gradle
 	implementation group: 'com.google.maps', name: 'google-maps-services', version: '0.18.0'
-    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
-
 
 	implementation platform('com.google.cloud:libraries-bom:20.5.0')
 	compile 'com.google.cloud:google-cloud-datastore'
