@@ -26,6 +26,9 @@ dependencies {
 	// https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc
 	implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.34.0'
 
+	// https://mvnrepository.com/artifact/com.zaxxer/HikariCP
+	implementation group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3'
+	
 	// https://mvnrepository.com/artifact/org.geotools/gt-shapefile
 	implementation group: 'org.geotools', name: 'gt-shapefile', version: '25-RC'
 	// https://mvnrepository.com/artifact/org.geotools/gt-main

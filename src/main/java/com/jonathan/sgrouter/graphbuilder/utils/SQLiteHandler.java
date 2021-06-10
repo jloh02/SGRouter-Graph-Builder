@@ -6,14 +6,12 @@ import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
-//TODO change to HikariCP
 @Slf4j
 public class SQLiteHandler {
   Connection conn;
@@ -21,13 +19,12 @@ public class SQLiteHandler {
   public SQLiteHandler() {
     String filename =
         GraphBuilderApplication.config.isAppengineDeployment() ? "/tmp/graph.db" : "graph.db";
-    String dbUrl = "jdbc:sqlite:" + filename;
     try {
       File oldDbFile = new File(filename);
       if (oldDbFile.exists() && !oldDbFile.delete())
         throw new IOException("Unable to delete graph.db");
 
-      this.conn = DriverManager.getConnection(dbUrl);
+      this.conn = DataSource.getConnection();
       Statement s = conn.createStatement();
       s.execute(
           "CREATE TABLE IF NOT EXISTS nodes(src TEXT PRIMARY KEY, name TEXT, lat NUMERIC, lon"
