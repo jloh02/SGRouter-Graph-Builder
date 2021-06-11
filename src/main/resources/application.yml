@@ -79,7 +79,6 @@ graphbuilder:
       PE:
         ascending: 'Punggol LRT (East Loop: A)'
         descending: 'Punggol LRT (East Loop: B)'
-      
     freq: [6,6,3,3]
     #Regex expression for stations exempt from linear vertex creation
     exclude-line-branch: '(^CE\d$)|(^CG\d$)'
