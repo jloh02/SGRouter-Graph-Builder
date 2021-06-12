@@ -3,6 +3,7 @@ package com.jonathan.sgrouter.graphbuilder.utils;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 

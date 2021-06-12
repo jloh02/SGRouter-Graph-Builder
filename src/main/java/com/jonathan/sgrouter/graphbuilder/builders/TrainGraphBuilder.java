@@ -15,24 +15,24 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.GeodeticCalculator;
 import org.opengis.referencing.FactoryException;
 
 @Slf4j
-public class MrtGraphBuilder {
-  static GeodeticCalculator geoCalc;
-  static HashMap<String, TrainServiceName> serviceMap =
+@AllArgsConstructor
+public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
+  public static GeodeticCalculator geoCalc;
+  public static HashMap<String, TrainServiceName> serviceMap =
       new HashMap<>(GraphBuilderApplication.config.graphbuilder.train.getServices());
 
-  public static ArrayList<Node> build(
-      SQLiteHandler sqh,
-      double mrtSpeed,
-      double mrtStopTime,
-      double lrtSpeed,
-      double lrtStopTime,
-      double walkSpeed) { // MRT speed in km per minute
+  SQLiteHandler sqh;
+  double mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime, walkSpeed;
+
+  public ArrayList<Node> call() { // MRT speed in km per minute
     ArrayList<ShpNode> stations = DatamallSHP.getSHP("TrainStation");
     ArrayList<ShpNode> exits = DatamallSHP.getSHP("TrainStationExit");
 
@@ -102,7 +102,7 @@ public class MrtGraphBuilder {
   }
 
   // Branch setup (Refer to branch-logic.txt)
-  static void setupBranches(
+  void setupBranches(
       HashMap<String, BranchInfo> branches,
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
@@ -143,7 +143,7 @@ public class MrtGraphBuilder {
     }
   }
 
-  static void setupData(
+  void setupData(
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
       ArrayList<ShpNode> stationsBaseName,
@@ -157,7 +157,7 @@ public class MrtGraphBuilder {
 
   // Linear Train Vertex Creation: Generates vertices on graph which are "straight lines"
   // Branch Creation: Refer to branch-logic.txt
-  static void generateLinesAndBranches(
+  void generateLinesAndBranches(
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
       ArrayList<Vertex> vtxList,
@@ -283,7 +283,7 @@ public class MrtGraphBuilder {
   }
 
   // Cross Train Lines Interchanges
-  static void generateInterchanges(
+  void generateInterchanges(
       ArrayList<ShpNode> stations,
       ArrayList<ShpNode> stationsBaseName,
       ArrayList<Vertex> vtxList,
@@ -313,7 +313,7 @@ public class MrtGraphBuilder {
   }
 
   // Loops in LRTs
-  static void generateLoops(
+  void generateLoops(
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
       ArrayList<Vertex> vtxList,
@@ -546,15 +546,15 @@ public class MrtGraphBuilder {
 
 class BuilderUtils {
   static double getDistance(ShpNode a, ShpNode b) {
-    MrtGraphBuilder.geoCalc.setStartingGeographicPoint(a.getLon(), a.getLat());
-    MrtGraphBuilder.geoCalc.setDestinationGeographicPoint(b.getLon(), b.getLat());
-    return (MrtGraphBuilder.geoCalc.getOrthodromicDistance() / 1000.0);
+    TrainGraphBuilder.geoCalc.setStartingGeographicPoint(a.getLon(), a.getLat());
+    TrainGraphBuilder.geoCalc.setDestinationGeographicPoint(b.getLon(), b.getLat());
+    return (TrainGraphBuilder.geoCalc.getOrthodromicDistance() / 1000.0);
   }
 
   static TrainServiceName getService(ShpNode a, ShpNode b) {
-    if (!MrtGraphBuilder.serviceMap.containsKey(a.getId().substring(0, 2)))
-      return MrtGraphBuilder.serviceMap.get(b.getId().substring(0, 2));
-    return MrtGraphBuilder.serviceMap.get(a.getId().substring(0, 2));
+    if (!TrainGraphBuilder.serviceMap.containsKey(a.getId().substring(0, 2)))
+      return TrainGraphBuilder.serviceMap.get(b.getId().substring(0, 2));
+    return TrainGraphBuilder.serviceMap.get(a.getId().substring(0, 2));
   }
 
   static ShpNode getBaseName(ShpNode node) {

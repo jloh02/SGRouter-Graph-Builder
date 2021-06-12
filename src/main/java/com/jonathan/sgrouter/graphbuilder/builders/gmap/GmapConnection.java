@@ -19,12 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GmapConnection {
-  GeoApiContext ctx;
-
-  public GmapConnection() {
-    ctx =
-        new GeoApiContext.Builder().apiKey(GraphBuilderApplication.config.gmap.getApiKey()).build();
-  }
+  static GeoApiContext ctx =
+      new GeoApiContext.Builder().apiKey(GraphBuilderApplication.config.gmap.getApiKey()).build();
 
   public double getWalkSpeed(LatLng src, LatLng des)
       throws IOException, InterruptedException, ApiException {
@@ -160,7 +156,7 @@ public class GmapConnection {
     return new GmapData();
   }
 
-  public void close() {
+  public static void close() {
     ctx.shutdown();
   }
 }

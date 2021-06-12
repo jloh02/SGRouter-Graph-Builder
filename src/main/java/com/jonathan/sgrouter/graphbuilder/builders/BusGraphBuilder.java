@@ -9,14 +9,20 @@ import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.concurrent.Callable;
+
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BusGraphBuilder {
-  public static ArrayList<Node> build(
-      SQLiteHandler sqh, double busSpeed, double busStopTime) { // Bus speed in km per minute
+@AllArgsConstructor
+public class BusGraphBuilder implements Callable<ArrayList<Node>> {
+  SQLiteHandler sqh;
+  double busSpeed, busStopTime;
+
+  public ArrayList<Node> call() { // Bus speed in km per minute
     /*----------------------Import data from Datamall----------------------*/
     HashMap<String, BusStop> importedBusStops = new BusStopData().getBusData();
     HashMap<BusServiceKey, BusService> importedBusServices = new BusServiceData().getBusData();

@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 public class SQLiteHandler {
@@ -34,11 +36,10 @@ public class SQLiteHandler {
               + " FOREIGN KEY(src) REFERENCES nodes(src), FOREIGN KEY(des) REFERENCES nodes(src),"
               + " PRIMARY KEY (src,des,service))");
       conn.setAutoCommit(false);
-    } catch (SQLException e) {
+    } catch (Exception e) {
       log.error(e.getMessage());
-    } catch (IOException e) {
-      log.error(e.getMessage());
-      System.exit(1);
+      throw new ResponseStatusException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Unable to connect to database");
     }
   }
 
