@@ -6,13 +6,15 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
+import java.util.concurrent.Callable;
+
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 @Slf4j
-public abstract class DatamallBus<T1, T2> {
+public abstract class DatamallBus<T1, T2> implements Callable<HashMap<T1,T2>>{
   HashMap<T1, T2> output;
 
   abstract String initDatamallType();
@@ -35,7 +37,8 @@ public abstract class DatamallBus<T1, T2> {
     return new JSONObject();
   }
 
-  public HashMap<T1, T2> getBusData() {
+  public HashMap<T1, T2> call() {
+    //log.debug("Starting "+Thread.currentThread().getName());
     String datamallType = initDatamallType();
     output = new HashMap<T1, T2>();
     JSONObject json;
@@ -50,6 +53,7 @@ public abstract class DatamallBus<T1, T2> {
         log.error(e.getMessage());
       }
     }
+    //log.debug("Returning "+Thread.currentThread().getName());
     return output;
   }
 }

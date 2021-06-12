@@ -45,8 +45,6 @@ public class GraphBuilderController {
     GmapTiming[] timings = Calibration.calibrateSpeeds();
     DatastoreHandler.setWalkSpeed(timings[3].speed);
 
-    // TODO Multithread bulding each graph
-
     ExecutorService executor = Executors.newFixedThreadPool(2);
     Future<ArrayList<Node>> busGraphFuture =
         executor.submit(new BusGraphBuilder(sqh, timings[0].speed, timings[0].stopTime));

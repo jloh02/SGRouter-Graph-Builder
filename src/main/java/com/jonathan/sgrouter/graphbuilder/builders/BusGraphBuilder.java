@@ -12,9 +12,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @AllArgsConstructor
@@ -24,9 +28,23 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
 
   public ArrayList<Node> call() { // Bus speed in km per minute
     /*----------------------Import data from Datamall----------------------*/
-    HashMap<String, BusStop> importedBusStops = new BusStopData().getBusData();
-    HashMap<BusServiceKey, BusService> importedBusServices = new BusServiceData().getBusData();
-    HashMap<BusRouteKey, BusRoute> importedBusRoutes = new BusRouteData().getBusData();
+    ExecutorService executor = Executors.newFixedThreadPool(3);
+    Future<HashMap<String, BusStop>> busStopFuture = executor.submit(new BusStopData());
+    Future<HashMap<BusServiceKey, BusService>> busServiceFuture =
+        executor.submit(new BusServiceData());
+    Future<HashMap<BusRouteKey, BusRoute>> busRouteFuture = executor.submit(new BusRouteData());
+
+    HashMap<String, BusStop> importedBusStops;
+    HashMap<BusServiceKey, BusService> importedBusServices;
+    HashMap<BusRouteKey, BusRoute> importedBusRoutes;
+    try {
+      importedBusStops = busStopFuture.get();
+      importedBusServices = busServiceFuture.get();
+      importedBusRoutes = busRouteFuture.get();
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Thread failed");
+    }
 
     // log.trace(importedBusStops.toString().substring(0,1000));
     // log.trace(importedBusServices.toString().substring(0,1000));
