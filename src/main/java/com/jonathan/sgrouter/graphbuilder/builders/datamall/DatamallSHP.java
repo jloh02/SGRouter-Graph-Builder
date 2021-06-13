@@ -1,5 +1,6 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
+import com.google.gson.JsonParser;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpNode;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpParser;
@@ -23,7 +24,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 
 @Slf4j
 public class DatamallSHP {
@@ -32,7 +32,7 @@ public class DatamallSHP {
 
   // Returns path to SHP-related files with filenames without extension
   public static ArrayList<ShpNode> getSHP(String layerID) {
-    fileDir = GraphBuilderApplication.config.appengineDeployment ? "/tmp/" + layerID : layerID;
+    fileDir = GraphBuilderApplication.appengineDeployment ? "/tmp/" + layerID : layerID;
     filename = fileDir + ".zip";
 
     deleteTmpFiles();
@@ -59,10 +59,15 @@ public class DatamallSHP {
               .header("AccountKey", DatastoreHandler.getValue("DATAMALL_API_KEY"))
               .build();
       HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
-      return new JSONObject(res.body().toString())
-          .getJSONArray("value")
-          .getJSONObject(0)
-          .getString("Link");
+      return JsonParser.parseString(res.body().toString())
+          .getAsJsonObject()
+          .get("value")
+          .getAsJsonArray()
+          .get(0)
+          .getAsJsonObject()
+          .get("Link")
+          .getAsString();
+
     } catch (Exception e) {
       log.error(e.getMessage());
     }
