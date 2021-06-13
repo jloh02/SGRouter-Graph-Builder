@@ -1,11 +1,8 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
-import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-@Slf4j
 public class BusStopData extends DatamallBus<String, BusStop> {
   @Override
   String initDatamallType() {
@@ -13,17 +10,15 @@ public class BusStopData extends DatamallBus<String, BusStop> {
   }
 
   @Override
-  void processData(JSONArray value) {
-    for (int i = 0; i < value.length(); i++) {
-      try {
-        JSONObject x = value.getJSONObject(i);
-        output.put(
-            x.getString("BusStopCode"),
-            new BusStop(
-                x.getString("Description"), x.getDouble("Latitude"), x.getDouble("Longitude")));
-      } catch (JSONException e) {
-        log.error(e.getMessage());
-      }
+  void processData(JsonArray value) {
+    for (int i = 0; i < value.size(); i++) {
+      JsonObject x = value.get(i).getAsJsonObject();
+      output.put(
+          x.get("BusStopCode").getAsString(),
+          new BusStop(
+              x.get("Description").getAsString(),
+              x.get("Latitude").getAsDouble(),
+              x.get("Longitude").getAsDouble()));
     }
   }
 }

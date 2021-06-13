@@ -1,11 +1,8 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
-import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-@Slf4j
 public class BusServiceData extends DatamallBus<BusServiceKey, BusService> {
   @Override
   String initDatamallType() {
@@ -13,22 +10,18 @@ public class BusServiceData extends DatamallBus<BusServiceKey, BusService> {
   }
 
   @Override
-  void processData(JSONArray value) {
-    for (int i = 0; i < value.length(); i++) {
-      try {
-        JSONObject x = value.getJSONObject(i);
-        output.put(
-            new BusServiceKey(x.getString("ServiceNo"), x.getInt("Direction")),
-            new BusService(
-                new String[] {
-                  x.optString("AM_Offpeak_Freq"),
-                  x.optString("PM_Offpeak_Freq"),
-                  x.optString("AM_Peak_Freq"),
-                  x.optString("PM_Peak_Freq")
-                }));
-      } catch (JSONException e) {
-        log.error(e.getMessage());
-      }
+  void processData(JsonArray value) {
+    for (int i = 0; i < value.size(); i++) {
+      JsonObject x = value.get(i).getAsJsonObject();
+      output.put(
+          new BusServiceKey(x.get("ServiceNo").getAsString(), x.get("Direction").getAsInt()),
+          new BusService(
+              new String[] {
+                optString(x.get("AM_Offpeak_Freq")),
+                optString(x.get("PM_Offpeak_Freq")),
+                optString(x.get("AM_Peak_Freq")),
+                optString(x.get("PM_Peak_Freq"))
+              }));
     }
   }
 }
