@@ -20,7 +20,7 @@ public class SQLiteHandler {
 
   public SQLiteHandler() {
     String filename =
-        GraphBuilderApplication.config.isAppengineDeployment() ? "/tmp/graph.db" : "graph.db";
+        GraphBuilderApplication.appengineDeployment ? "/tmp/graph.db" : "graph.db";
     try {
       File oldDbFile = new File(filename);
       if (oldDbFile.exists() && !oldDbFile.delete())

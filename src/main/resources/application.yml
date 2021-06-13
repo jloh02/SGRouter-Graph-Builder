@@ -7,12 +7,10 @@ spring:
       enabled: ALWAYS
 logging:
   level:
-    com.jonathan: TRACE
+    com.jonathan: DEBUG
     org.springframework: INFO
     com.zaxxer.hikari: WARN
     com.google.cloud: WARN
-
-appengine-deployment: true
 
 gmap:
   local-api-key: "AIzaSyAfTaASVC0uiAlXFTpJaaLlJt_5T4G9Slo"

@@ -9,14 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties
 public class Config {
-  public boolean appengineDeployment;
   @Autowired public GmapConfig gmap;
   @Autowired public GraphBuilderConfig graphbuilder;
 
   public Config() {}
 
   public Config(Config config) {
-    this.appengineDeployment = config.appengineDeployment;
     this.gmap = config.gmap;
     this.graphbuilder = config.graphbuilder;
   }

@@ -25,7 +25,7 @@ public class CronFilter implements Filter {
     HttpServletRequest req = (HttpServletRequest) request;
     String appengineHeader = req.getHeader("X-Appengine-Country");
     GraphBuilderApplication.appengineDeployment = appengineHeader!=null;
-    log.debug(appengineHeader);
+    log.debug("App Engine Deployment: {}",GraphBuilderApplication.appengineDeployment);
     if (appengineHeader!=null && appengineHeader.equals("true")) {
       String cronHeader = req.getHeader("X-Appengine-Cron");
       if (cronHeader == null || !cronHeader.equals("true")) {

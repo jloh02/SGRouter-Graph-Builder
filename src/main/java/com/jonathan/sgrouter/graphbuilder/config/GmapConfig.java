@@ -13,7 +13,7 @@ public class GmapConfig {
   String localApiKey;
 
   public String getApiKey() {
-    return GraphBuilderApplication.config.appengineDeployment
+    return GraphBuilderApplication.appengineDeployment
         ? DatastoreHandler.getValue("GMAP_API_KEY")
         : localApiKey;
   }

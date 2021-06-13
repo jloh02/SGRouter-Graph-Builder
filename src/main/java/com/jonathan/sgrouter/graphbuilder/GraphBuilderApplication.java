@@ -10,7 +10,7 @@ import org.springframework.context.event.EventListener;
 
 @SpringBootApplication
 public class GraphBuilderApplication {
-
+  public static boolean appengineDeployment;
   public static Config config;
   public static ZonedDateTime sgNow;
 
