@@ -10,6 +10,8 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ansi.AnsiOutput;
+import org.springframework.boot.ansi.AnsiOutput.Enabled;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -25,6 +27,9 @@ public class CronFilter implements Filter {
     String appengineHeader = req.getHeader("X-Appengine-Country");
 
     GraphBuilderApplication.appengineDeployment = appengineHeader != null;
+
+    if (!GraphBuilderApplication.appengineDeployment) AnsiOutput.setEnabled(Enabled.ALWAYS);
+
     log.debug("App Engine Deployment: {}", GraphBuilderApplication.appengineDeployment);
 
     if (GraphBuilderApplication.appengineDeployment) {

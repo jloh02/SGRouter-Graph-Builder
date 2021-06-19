@@ -2,16 +2,13 @@ spring:
   config:
     activate:
       on-profile: prod
-  output:
-    ansi:
-      enabled: ALWAYS
 logging:
   level:
     com.jonathan: DEBUG
     org.springframework: INFO
     com.zaxxer.hikari: WARN
     com.google.cloud: WARN
-
+    
 gmap:
   local-api-key: "AIzaSyAfTaASVC0uiAlXFTpJaaLlJt_5T4G9Slo"
 
