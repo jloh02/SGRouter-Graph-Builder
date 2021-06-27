@@ -42,5 +42,6 @@ public class CronFilter implements Filter {
       }
     }
     chain.doFilter(request, response);
+    System.exit(0);
   }
 }
