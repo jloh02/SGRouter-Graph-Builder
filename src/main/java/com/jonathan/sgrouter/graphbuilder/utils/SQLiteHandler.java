@@ -10,6 +10,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,8 +21,7 @@ public class SQLiteHandler {
   Connection conn;
 
   public SQLiteHandler() {
-    String filename =
-        GraphBuilderApplication.appengineDeployment ? "/tmp/graph.db" : "graph.db";
+    String filename = GraphBuilderApplication.appengineDeployment ? "/tmp/graph.db" : "graph.db";
     try {
       File oldDbFile = new File(filename);
       if (oldDbFile.exists() && !oldDbFile.delete())
@@ -35,6 +36,7 @@ public class SQLiteHandler {
           "CREATE TABLE IF NOT EXISTS vertex(src TEXT, des TEXT, service TEXT, time NUMERIC,"
               + " FOREIGN KEY(src) REFERENCES nodes(src), FOREIGN KEY(des) REFERENCES nodes(src),"
               + " PRIMARY KEY (src,des,service))");
+      s.execute("CREATE TABLE IF NOT EXISTS freqs(service TEXT PRIMARY KEY, freq NUMERIC)");
       conn.setAutoCommit(false);
     } catch (Exception e) {
       log.error(e.getMessage());
@@ -52,6 +54,19 @@ public class SQLiteHandler {
         ps.setString(2, n.getName());
         ps.setDouble(3, n.getLat());
         ps.setDouble(4, n.getLon());
+        ps.executeUpdate();
+      }
+    } catch (SQLException e) {
+      log.error(e.getMessage());
+    }
+  }
+
+  public void addFreq(HashMap<String, Double> freqs) {
+    try {
+      PreparedStatement ps = conn.prepareStatement("INSERT INTO freqs(service,freq) VALUES(?,?)");
+      for (Entry<String, Double> e : freqs.entrySet()) {
+        ps.setString(1, e.getKey());
+        ps.setDouble(2, e.getValue());
         ps.executeUpdate();
       }
     } catch (SQLException e) {

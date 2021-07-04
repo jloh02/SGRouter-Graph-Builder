@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -72,6 +73,15 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
     // log.trace(sortedBusServices.toString().substring(0, 100));
     // log.trace(sortedBusRoutes.toString().substring(0, 1000));
 
+    /*----------------------Generate bus frequency list----------------------*/
+    HashMap<String, Double> freqList = new HashMap<>();
+    for (Entry<BusServiceKey, BusService> ent : importedBusServices.entrySet()) {
+      BusServiceKey k = ent.getKey();
+      BusService s = ent.getValue();
+      double f = Utils.getFreq(s.getFreqArr());
+      if(f>0)freqList.put(k.service, f);
+    }
+
     /*----------------------Generate bus adjacency list----------------------*/
     HashSet<String> srcList = new HashSet<>();
     ArrayList<Vertex> vtxList = new ArrayList<>();
@@ -80,8 +90,6 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
     for (int i = 0; i < sortedBusRoutes.size(); i++) {
       BusRouteKey srcRouteKey = sortedBusRoutes.get(i);
       BusRoute srcRouteData = importedBusRoutes.get(srcRouteKey);
-      BusService srcServiceData =
-          importedBusServices.get(BusServiceKey.fromBusRouteKey(srcRouteKey));
 
       // Handles abnormal cases such as CTE expressway as a "node"
       if (!Utils.isBusStop(srcRouteData.src)) continue;
@@ -110,20 +118,18 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
         lastBus = lastBus.plusDays(1); // Handle for lastBus after 00:00
       if (sgNow.isBefore(firstBus) || sgNow.isAfter(lastBus)) continue;
 
-      double freq = Utils.getFreq(srcServiceData.getFreqArr());
-      if (freq < 0)
+      if (freqList.get(srcRouteKey.service) < 0)
         continue; // Service not available during non-peak but still within first/last bus range
 
-      for (int j = i + 1;
-          j < sortedBusRoutes.size()
-              && sortedBusRoutes.get(j).direction == srcRouteKey.direction
-              && sortedBusRoutes.get(j).service.equals(srcRouteKey.service);
-          j++) {
-        BusRouteKey desRouteKey = sortedBusRoutes.get(j);
+      if (i + 1 < sortedBusRoutes.size()
+          && sortedBusRoutes.get(i + 1).direction == srcRouteKey.direction
+          && sortedBusRoutes.get(i + 1).service.equals(srcRouteKey.service)) {
+
+        BusRouteKey desRouteKey = sortedBusRoutes.get(i + 1);
         BusRoute desRouteData = importedBusRoutes.get(desRouteKey);
 
         if (!Utils.isBusStop(desRouteData.src)) continue;
-        double travelTime = (desRouteData.distance - srcRouteData.distance) / busSpeed + freq;
+        double travelTime = (desRouteData.distance - srcRouteData.distance) / busSpeed;
 
         vtxList.add(
             new Vertex(srcRouteData.src, desRouteData.src, srcRouteKey.service, travelTime));
@@ -140,6 +146,7 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
     /*----------------------Update DB----------------------*/
     sqh.addNodes(nodeList);
     sqh.addVertices(vtxList);
+    sqh.addFreq(freqList);
 
     log.debug("Bus graph created");
 
