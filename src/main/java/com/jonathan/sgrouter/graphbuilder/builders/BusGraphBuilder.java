@@ -79,7 +79,7 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
       BusServiceKey k = ent.getKey();
       BusService s = ent.getValue();
       double f = Utils.getFreq(s.getFreqArr());
-      if(f>0)freqList.put(k.service, f);
+      if (f > 0) freqList.put(k.service, f);
     }
 
     /*----------------------Generate bus adjacency list----------------------*/
@@ -118,7 +118,7 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
         lastBus = lastBus.plusDays(1); // Handle for lastBus after 00:00
       if (sgNow.isBefore(firstBus) || sgNow.isAfter(lastBus)) continue;
 
-      if (freqList.get(srcRouteKey.service) < 0)
+      if (!freqList.containsKey(srcRouteKey.service))
         continue; // Service not available during non-peak but still within first/last bus range
 
       if (i + 1 < sortedBusRoutes.size()
