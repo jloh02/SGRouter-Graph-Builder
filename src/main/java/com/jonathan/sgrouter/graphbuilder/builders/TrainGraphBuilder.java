@@ -42,9 +42,6 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
     Collections.sort(stations);
     Collections.sort(exits);
 
-    // log.trace(stations);
-    // log.trace(exits);
-
     /*----------------------Generate train network adjacency list----------------------*/
     HashSet<String> srcList = new HashSet<>();
     ArrayList<Vertex> vtxList = new ArrayList<>();
@@ -282,7 +279,6 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
   }
 
   // Loops in LRTs
-  //TODO convert loops to single-vertices
   void generateLoops(
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
@@ -305,145 +301,48 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       TrainServiceName tsn = serviceMap.get(loop[1].substring(0, 2));
 
       if (loop.length == 3) {
-        // Build loop node list and cumulative sum array
-        ArrayList<ShpNode> nodes = new ArrayList<>();
-        nodes.add(stations.get(idxs.get(loop[0])));
-        double sumDist = 0.0;
-        ArrayList<Double> cumDist = new ArrayList<>();
-        cumDist.add(0.0);
-        sumDist +=
-            BuilderUtils.getDistance(
-                        stations.get(idxs.get(loop[0])), stations.get(idxs.get(loop[1])))
-                    / speed
-                + stopTime;
-        cumDist.add(sumDist);
-        nodes.add(stations.get(idxs.get(loop[1])));
         for (int i = idxs.get(loop[1]) + 1; i <= idxs.get(loop[2]); i++) {
-          sumDist += BuilderUtils.getDistance(stations.get(i), stations.get(i - 1));
-          cumDist.add(sumDist);
-          nodes.add(stations.get(i));
-        }
-        sumDist +=
-            BuilderUtils.getDistance(
-                        stations.get(idxs.get(loop[0])), stations.get(idxs.get(loop[2])))
-                    / speed
-                + stopTime;
-
-        // Use cumulative sum array for forward and backward loop traversal (Take lesser)
-        double halfLoopDist = sumDist * 0.5;
-        for (int i = 1; i < nodes.size(); i++) {
-          for (int j = 0; j < i; j++) {
-            double dist = cumDist.get(i) - cumDist.get(j);
-            if (dist > halfLoopDist) dist = sumDist - dist;
-            vtxList.add(
-                new Vertex(nodes.get(i).getId(), nodes.get(j).getId(), tsn.descending, dist));
-            vtxList.add(
-                new Vertex(nodes.get(j).getId(), nodes.get(i).getId(), tsn.ascending, dist));
-          }
+          double dist = BuilderUtils.getDistance(stations.get(i), stations.get(i - 1));
+          vtxList.add(
+              new Vertex(
+                  stations.get(i).getId(), stations.get(i - 1).getId(), tsn.descending, dist));
+          vtxList.add(
+              new Vertex(
+                  stations.get(i - 1).getId(), stations.get(i).getId(), tsn.ascending, dist));
         }
       } else if (loop.length == 4) {
-        // Build straight node list and cumulative sum array
-        ArrayList<ShpNode> straightNodes = new ArrayList<>();
-
-        double sumDist = 0.0;
-        ArrayList<Double> straightCumDist = new ArrayList<>();
-        straightCumDist.add(0.0);
-        straightNodes.add(stations.get(idxs.get(loop[0])));
         for (int i = idxs.get(loop[0]) + 1; i <= idxs.get(loop[1]); i++) {
-          sumDist +=
+          double dist =
               BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / speed + stopTime;
-
-          straightCumDist.add(sumDist);
-          straightNodes.add(stations.get(i));
-        }
-        double straightSumDist = sumDist;
-
-        // Draw vertices for straight portion
-        for (int i = 0; i < straightNodes.size() - 1; i++) {
-          for (int j = i + 1; j < straightNodes.size(); j++) {
-            double dist = straightCumDist.get(j) - straightCumDist.get(i);
-            vtxList.add(
-                new Vertex(
-                    straightNodes.get(i).getId(),
-                    straightNodes.get(j).getId(),
-                    tsn.straightAscending,
-                    dist));
-            vtxList.add(
-                new Vertex(
-                    straightNodes.get(j).getId(),
-                    straightNodes.get(i).getId(),
-                    tsn.straightDescending,
-                    dist));
-          }
+          vtxList.add(
+              new Vertex(
+                  stations.get(i).getId(),
+                  stations.get(i - 1).getId(),
+                  tsn.straightAscending,
+                  dist));
+          vtxList.add(
+              new Vertex(
+                  stations.get(i - 1).getId(),
+                  stations.get(i).getId(),
+                  tsn.straightDescending,
+                  dist));
         }
 
-        // Build loop node list and cumulative sum array
-        ArrayList<ShpNode> loopNodes = new ArrayList<>();
-
-        loopNodes.add(stations.get(idxs.get(loop[1])));
-        sumDist = 0.0;
-        ArrayList<Double> loopCumDist = new ArrayList<>();
-        loopCumDist.add(0.0);
-        sumDist +=
-            BuilderUtils.getDistance(
-                        stations.get(idxs.get(loop[1])), stations.get(idxs.get(loop[2])))
-                    / speed
-                + stopTime;
-        loopCumDist.add(sumDist);
-        loopNodes.add(stations.get(idxs.get(loop[2])));
+        ShpNode a = stations.get(idxs.get(loop[1]));
+        ShpNode b = stations.get(idxs.get(loop[2]));
+        double transdist = BuilderUtils.getDistance(a, b) / speed + stopTime;
+        vtxList.add(new Vertex(a.getId(), b.getId(), tsn.ascending, transdist));
+        vtxList.add(new Vertex(b.getId(), a.getId(), tsn.descending, transdist));
 
         for (int i = idxs.get(loop[2]) + 1; i <= idxs.get(loop[3]); i++) {
-          sumDist +=
+          double dist =
               BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / speed + stopTime;
-          loopCumDist.add(sumDist);
-          loopNodes.add(stations.get(i));
-        }
-        sumDist +=
-            BuilderUtils.getDistance(
-                        stations.get(idxs.get(loop[3])), stations.get(idxs.get(loop[1])))
-                    / speed
-                + stopTime;
-
-        // Use cumulative sum array for forward and backward loop traversal (Take lesser)
-        double halfLoopDist = sumDist * 0.5;
-        for (int i = 0; i < loopNodes.size(); i++) {
-          String servInc = tsn.ascending, servDec = tsn.descending;
-          for (int j = i + 1; j < loopNodes.size(); j++) {
-            double dist = loopCumDist.get(j) - loopCumDist.get(i);
-            // Only applicable for straight-loop vertices
-            if (i == 0 && dist > halfLoopDist) {
-              dist = sumDist - dist;
-              servInc = tsn.descending;
-              servDec = tsn.ascending;
-            }
-
-            vtxList.add(
-                new Vertex(loopNodes.get(i).getId(), loopNodes.get(j).getId(), servInc, dist));
-            vtxList.add(
-                new Vertex(loopNodes.get(j).getId(), loopNodes.get(i).getId(), servDec, dist));
-
-            // Join loops to straight
-            if (i == 0) { // loop[1]
-
-              for (int k = 0;
-                  k < straightNodes.size() - 1;
-                  k++) { // Last straight node belongs to loop
-                double straightDist = straightSumDist - straightCumDist.get(k);
-                vtxList.add(
-                    new Vertex(
-                        loopNodes.get(j).getId(),
-                        straightNodes.get(k).getId(),
-                        servDec,
-                        dist + straightDist));
-                vtxList.add(
-                    new Vertex(
-                        straightNodes.get(k).getId(),
-                        loopNodes.get(j).getId(),
-                        servInc,
-                        dist + straightDist));
-              }
-            }
-          }
+          vtxList.add(
+              new Vertex(
+                  stations.get(i).getId(), stations.get(i - 1).getId(), tsn.ascending, dist));
+          vtxList.add(
+              new Vertex(
+                  stations.get(i - 1).getId(), stations.get(i).getId(), tsn.descending, dist));
         }
       }
     }
