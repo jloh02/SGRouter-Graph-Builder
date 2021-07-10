@@ -40,6 +40,7 @@ public class GraphBuilderController {
     SQLiteHandler sqh = new SQLiteHandler();
 
     ZonedDateTime serverNow = ZonedDateTime.now();
+    serverNow = serverNow.withYear(2021).withDayOfYear(3).withHour(12).withMinute(0); // !Test Code
     GraphBuilderApplication.sgNow = serverNow.withZoneSameInstant(ZoneId.of("Asia/Singapore"));
 
     GmapTiming[] timings = Calibration.calibrateSpeeds();

@@ -193,6 +193,7 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
             .getId()
             .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine())
         && startIdx < stations.size()) startIdx++;
+    int skipped = 0;
     for (int i = startIdx + 1; i < stations.size(); i++) {
       // Exclude loops from linear vertex creation
       if (stations
@@ -214,6 +215,8 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
         currBranch = branches.get(stations.get(i).getId());
       }
 
+      int j = i - 1 - skipped;
+
       // Add vertex if same lines, else reset line
       if (stations
           .get(i)
@@ -221,7 +224,7 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
           .substring(0, 2)
           .equals(stations.get(startIdx).getId().substring(0, 2))) {
 
-        double edgeDist = BuilderUtils.getDistance(stations.get(i - 1), stations.get(i));
+        double edgeDist = BuilderUtils.getDistance(stations.get(j), stations.get(i));
         if (Utils.isLRT(stations.get(i).getId())) edgeDist = edgeDist / lrtSpeed + lrtStopTime;
         else edgeDist = edgeDist / mrtSpeed + mrtStopTime;
 
@@ -229,18 +232,20 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
             .graphbuilder
             .train
             .getInvalidStations()
-            .contains(stations.get(i).getId())) continue;
+            .contains(stations.get(i).getId())) {
+          skipped++;
+          continue;
+        } else skipped = 0;
 
         TrainServiceName serv =
             currBranch == null
-                ? BuilderUtils.getService(stations.get(i), stations.get(i - 1))
+                ? BuilderUtils.getService(stations.get(i), stations.get(j))
                 : currBranch.getPostBranchService();
         vtxList.add(
             new Vertex(
-                stations.get(i).getId(), stations.get(i - 1).getId(), serv.descending, edgeDist));
+                stations.get(i).getId(), stations.get(j).getId(), serv.descending, edgeDist));
         vtxList.add(
-            new Vertex(
-                stations.get(i - 1).getId(), stations.get(i).getId(), serv.ascending, edgeDist));
+            new Vertex(stations.get(j).getId(), stations.get(i).getId(), serv.ascending, edgeDist));
       } else {
         startIdx = i;
         currBranch = null;
@@ -359,6 +364,11 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       ArrayList<Node> nodeList,
       double walkSpeed) {
     for (ShpNode exit : exits) {
+      if (GraphBuilderApplication.config
+          .graphbuilder
+          .train
+          .getInvalidStations()
+          .contains(exit.getId())) continue;
       exitStationIds.add(exit.getId());
 
       String[] exitNum = exit.getName().split("EXIT ");
