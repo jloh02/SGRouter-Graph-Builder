@@ -33,7 +33,7 @@ public class GmapWorker {
       GmapTiming t =
           gmapConn.getGmapSpeed(
               srcList.get(i), desList.get(i), mode, servList.get(i), defaultTiming);
-      //log.debug(t.toString());
+      // log.debug(t.toString());
       if (!t.equals(defaultTiming)) {
         numValid++;
         sumSpeed += t.speed;

@@ -1,14 +1,13 @@
 package com.jonathan.sgrouter.graphbuilder.calibration;
 
-import java.util.concurrent.Callable;
-
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
+import java.util.concurrent.Callable;
 
-public class CalibBus implements Callable<GmapTiming>{
-  public GmapTiming call(){
+public class CalibBus implements Callable<GmapTiming> {
+  public GmapTiming call() {
     /*------------------------------------------ BUS SPEED ------------------------------------------*/
     // Bus 54: Bishan Int → Kampong Bahru Ter
     // Bus 30: Bedok Int → Boon Lay Int

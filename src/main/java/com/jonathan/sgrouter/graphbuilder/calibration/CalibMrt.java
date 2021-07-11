@@ -1,14 +1,13 @@
 package com.jonathan.sgrouter.graphbuilder.calibration;
 
-import java.util.concurrent.Callable;
-
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
+import java.util.concurrent.Callable;
 
-public class CalibMrt implements Callable<GmapTiming>{
-  public GmapTiming call(){
+public class CalibMrt implements Callable<GmapTiming> {
+  public GmapTiming call() {
     /*------------------------------------------ MRT SPEED ------------------------------------------*/
     // DT Line: Bukit Panjang → Upper Changi
     // NS Line: Bukit Batok → Marina South Pier
