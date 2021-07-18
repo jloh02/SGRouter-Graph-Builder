@@ -13,4 +13,4 @@ pluginManagement {
   }
 }
 
-rootProject.name = 'graph_builder_service'
+rootProject.name = 'graph_builder'
