@@ -19,22 +19,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class SQLiteHandler {
   Connection conn;
 
-  static {
-    File dbFolder = new File("dbs");
-
-    if (dbFolder.exists()) {
-      for (String s : dbFolder.list()) {
-        File f = new File(dbFolder.getPath(), s);
-        if (!f.delete()) throw new RuntimeException("Unable to delete graph.db");
-      }
-    }
-
-    dbFolder.mkdirs();
-  }
-
   public SQLiteHandler(String filename) {
     filename = "dbs/" + filename;
     if (GraphBuilderApplication.appengineDeployment) filename = "/tmp/" + filename;
+
+    File f = new File(filename);
+    if (f.exists() && !f.delete()) throw new RuntimeException("Unable to delete " + filename);
+
     try {
       this.conn = DataSource.getConnection(filename);
       Statement s = conn.createStatement();

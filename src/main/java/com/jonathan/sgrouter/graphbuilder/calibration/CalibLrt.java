@@ -1,14 +1,18 @@
 package com.jonathan.sgrouter.graphbuilder.calibration;
 
-import java.util.concurrent.Callable;
-
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
+import java.time.Instant;
+import java.util.concurrent.Callable;
+import lombok.AllArgsConstructor;
 
-public class CalibLrt implements Callable<GmapTiming>{
-  public GmapTiming call(){
+@AllArgsConstructor
+public class CalibLrt implements Callable<GmapTiming> {
+  final Instant dt;
+
+  public GmapTiming call() {
     /*------------------------------------------ LRT SPEED ------------------------------------------*/
     // STC: Thanggam → Sengkang
     // PTC: Riviera → Punggol
@@ -19,6 +23,6 @@ public class CalibLrt implements Callable<GmapTiming>{
     gw.add("ChIJ3TdadkoX2jERFPpqYTr14uA", "ChIJW8xBftIX2jER0iArkCKzqZ8", "Sengkang");
     gw.add("ChIJrSYX8Pg92jERCBdEFSd-FGU", "ChIJB9fWN-MV2jER0btc565fpUA", "Punggol");
     gw.add("ChIJf-qKBzYR2jERPCaE21v1ssk", "ChIJD58--UkR2jERMi5sKsqSqko", "Bukit Panjang");
-    return gw.getAvgTiming(TransitMode.SUBWAY);
+    return gw.getAvgTiming(TransitMode.SUBWAY, dt);
   }
 }

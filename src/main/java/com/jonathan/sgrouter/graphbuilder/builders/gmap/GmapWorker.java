@@ -3,6 +3,7 @@ package com.jonathan.sgrouter.graphbuilder.builders.gmap;
 import com.google.maps.model.LatLng;
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
+import java.time.Instant;
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,13 +28,13 @@ public class GmapWorker {
     return GraphBuilderApplication.config.graphbuilder.getDefaultWalkingSpeed();
   }
 
-  public GmapTiming getAvgTiming(TransitMode mode) {
+  public GmapTiming getAvgTiming(TransitMode mode, Instant time) {
     double numValid = 0.0, sumSpeed = 0.0, sumStopTime = 0.0;
     for (int i = 0; i < srcList.size(); i++) {
       GmapTiming t =
           gmapConn.getGmapSpeed(
-              srcList.get(i), desList.get(i), mode, servList.get(i), defaultTiming);
-      //log.debug(t.toString());
+              srcList.get(i), desList.get(i), mode, servList.get(i), defaultTiming, time);
+      // log.debug(t.toString());
       if (!t.equals(defaultTiming)) {
         numValid++;
         sumSpeed += t.speed;

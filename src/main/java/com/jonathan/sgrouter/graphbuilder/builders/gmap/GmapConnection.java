@@ -14,13 +14,18 @@ import com.google.maps.model.TravelMode;
 import com.google.maps.model.Unit;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GmapConnection {
-  static GeoApiContext ctx =
-      new GeoApiContext.Builder().apiKey(GraphBuilderApplication.config.gmap.getApiKey()).build();
+  static GeoApiContext ctx;
+
+  public static void open() {
+    ctx =
+        new GeoApiContext.Builder().apiKey(GraphBuilderApplication.config.gmap.getApiKey()).build();
+  }
 
   public double getWalkSpeed(LatLng src, LatLng des)
       throws IOException, InterruptedException, ApiException {
@@ -46,8 +51,9 @@ public class GmapConnection {
       String desPID,
       TransitMode mode,
       String serviceSearchStr,
-      GmapTiming defaultTiming) {
-    GmapData gdA = getTimingWithPid(srcPID, desPID, mode, serviceSearchStr);
+      GmapTiming defaultTiming,
+      Instant time) {
+    GmapData gdA = getTimingWithPid(srcPID, desPID, mode, serviceSearchStr, time);
     // log.trace(gdA.toString());
 
     if (gdA.isNull()) return new GmapTiming(defaultTiming.speed, defaultTiming.stopTime);
@@ -59,7 +65,11 @@ public class GmapConnection {
         i++) { // Between 50-90% of journey for 2nd destination node
       GmapData gdB =
           getTimingWithLatLng(
-              srcPID, gdA.polyline.get(gdA.polyline.size() - 1 - jump * i), mode, serviceSearchStr);
+              srcPID,
+              gdA.polyline.get(gdA.polyline.size() - 1 - jump * i),
+              mode,
+              serviceSearchStr,
+              time);
       // log.trace(gdB.toString());
 
       // Calculate stop time (Refer to MD file "gmap_stoptime_and_speed_calculation" for
@@ -87,7 +97,7 @@ public class GmapConnection {
   }
 
   private GmapData getTimingWithLatLng(
-      String srcPID, LatLng desLatLng, TransitMode mode, String searchStr) {
+      String srcPID, LatLng desLatLng, TransitMode mode, String searchStr, Instant t) {
     DirectionsApiRequest req =
         DirectionsApi.newRequest(ctx)
             .mode(TravelMode.TRANSIT)
@@ -96,12 +106,13 @@ public class GmapConnection {
             .transitMode(mode)
             .transitRoutingPreference(TransitRoutingPreference.FEWER_TRANSFERS)
             .originPlaceId(srcPID)
-            .destination(desLatLng);
+            .destination(desLatLng)
+            .departureTime(t);
     return getTimingAbstract(req, mode, searchStr);
   }
 
   private GmapData getTimingWithPid(
-      String srcPID, String desPID, TransitMode mode, String searchStr) {
+      String srcPID, String desPID, TransitMode mode, String searchStr, Instant t) {
     DirectionsApiRequest req =
         DirectionsApi.newRequest(ctx)
             .mode(TravelMode.TRANSIT)
@@ -110,7 +121,8 @@ public class GmapConnection {
             .transitMode(mode)
             .transitRoutingPreference(TransitRoutingPreference.FEWER_TRANSFERS)
             .originPlaceId(srcPID)
-            .destinationPlaceId(desPID);
+            .destinationPlaceId(desPID)
+            .departureTime(t);
     return getTimingAbstract(req, mode, searchStr);
   }
 
@@ -120,20 +132,23 @@ public class GmapConnection {
       // log.trace("----------");
       for (DirectionsRoute route : res.routes) {
         DirectionsLeg leg = route.legs[0];
-
         // log.trace(leg);
         // log.trace(leg.steps.length);
         // log.trace(Arrays.toString(leg.steps));
 
         if (leg.steps.length > 3) continue;
-
-        int stepIdx = leg.steps.length / 2;
-        if (leg.steps.length == 2 && leg.steps[0].travelMode == TravelMode.TRANSIT) stepIdx = 0;
-
-        // log.trace(leg.steps[stepIdx].transitDetails);
-
-        if (!leg.steps[stepIdx].transitDetails.line.toString().contains(searchStr)
-            && !leg.steps[stepIdx].transitDetails.headsign.toString().contains(searchStr)) continue;
+        int stepIdx = -1;
+        for (int i = 0; i < leg.steps.length; i++) {
+          if (leg.steps[i].travelMode != TravelMode.WALKING) {
+            if (leg.steps[i].transitDetails.line.toString().contains(searchStr)
+                || leg.steps[i].transitDetails.headsign.toString().contains(searchStr)) stepIdx = i;
+            else {
+              stepIdx = -1;
+              break;
+            }
+          }
+        }
+        if (stepIdx == -1) continue;
 
         // log.trace(leg.steps[0].distance.inMeters);
         // log.trace(leg.steps[0].duration.inSeconds);
@@ -152,7 +167,10 @@ public class GmapConnection {
       log.error(e.getMessage());
     } catch (InterruptedException e) {
       log.error(e.getMessage());
-    }
+    } /*catch (NullPointerException e) {
+        log.error(Arrays.toString(e.getStackTrace()));
+        System.exit(1);
+      }*/
     return new GmapData();
   }
 

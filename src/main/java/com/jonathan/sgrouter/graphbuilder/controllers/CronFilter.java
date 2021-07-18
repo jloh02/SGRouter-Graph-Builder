@@ -42,6 +42,6 @@ public class CronFilter implements Filter {
       }
     }
     chain.doFilter(request, response);
-    if (req.getParameter("hHigh").equals("24")) System.exit(0);
+    if (req.getParameter("hHigh") != null && req.getParameter("hHigh").equals("24")) System.exit(0);
   }
 }

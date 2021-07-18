@@ -1,14 +1,18 @@
 package com.jonathan.sgrouter.graphbuilder.calibration;
 
-import java.util.concurrent.Callable;
-
 import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
+import java.time.Instant;
+import java.util.concurrent.Callable;
+import lombok.AllArgsConstructor;
 
-public class CalibBus implements Callable<GmapTiming>{
-  public GmapTiming call(){
+@AllArgsConstructor
+public class CalibBus implements Callable<GmapTiming> {
+  final Instant dt;
+
+  public GmapTiming call() {
     /*------------------------------------------ BUS SPEED ------------------------------------------*/
     // Bus 54: Bishan Int → Kampong Bahru Ter
     // Bus 30: Bedok Int → Boon Lay Int
@@ -23,6 +27,6 @@ public class CalibBus implements Callable<GmapTiming>{
     gw.add("ChIJYdfkYW8U2jERzA4NiwUkuOw", "ChIJa1PPHbMi2jERKCuIMcgqSFs", "854");
     gw.add("ChIJa1PPHbMi2jERKCuIMcgqSFs", "ChIJT0PyK44a2jER1jVN-Eu18cI", "196");
     gw.add("ChIJxe0CeekR2jERTvo3i83VqUY", "ChIJFczkAA492jERUI8_NFpELcg", "67");
-    return gw.getAvgTiming(TransitMode.BUS);
+    return gw.getAvgTiming(TransitMode.BUS, dt);
   }
 }
