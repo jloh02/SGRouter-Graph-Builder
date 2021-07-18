@@ -10,6 +10,7 @@ import com.jonathan.sgrouter.graphbuilder.models.config.BranchConfig;
 import com.jonathan.sgrouter.graphbuilder.models.config.TrainServiceName;
 import com.jonathan.sgrouter.graphbuilder.utils.SQLiteHandler;
 import com.jonathan.sgrouter.graphbuilder.utils.Utils;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,15 +30,19 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
   public static HashMap<String, TrainServiceName> serviceMap =
       new HashMap<>(GraphBuilderApplication.config.graphbuilder.train.getServices());
 
+  static ArrayList<ShpNode> stationsImport = DatamallSHP.getSHP("TrainStation");
+  static ArrayList<ShpNode> exitsImport = DatamallSHP.getSHP("TrainStationExit");
+
   SQLiteHandler sqh;
   double mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime, walkSpeed;
+  ZonedDateTime sgTime;
 
   public ArrayList<Node> call() { // MRT speed in km per minute
-    ArrayList<ShpNode> stations = DatamallSHP.getSHP("TrainStation");
-    ArrayList<ShpNode> exits = DatamallSHP.getSHP("TrainStationExit");
+    ArrayList<ShpNode> stations = new ArrayList<>(stationsImport);
+    ArrayList<ShpNode> exits = new ArrayList<>(exitsImport);
 
-    stations.removeIf(x -> !Utils.isInService(x.getId()));
-    exits.removeIf(x -> !Utils.isInService(x.getId()));
+    stations.removeIf(x -> !Utils.isInService(sgTime, x.getId()));
+    exits.removeIf(x -> !Utils.isInService(sgTime, x.getId()));
 
     Collections.sort(stations);
     Collections.sort(exits);
@@ -89,7 +94,8 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
         walkSpeed);
 
     /*----------------------Update DB----------------------*/
-    double freq = Utils.getFreq(GraphBuilderApplication.config.graphbuilder.train.getFreq());
+    double freq =
+        Utils.getFreq(sgTime, GraphBuilderApplication.config.graphbuilder.train.getFreq());
     freq *= 0.5;
     HashMap<String, Double> freqMap = new HashMap<>();
     freqMap.put("train", freq);
@@ -188,23 +194,25 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
     int startIdx = 0;
 
     BranchInfo currBranch = null;
-    while (stations
+    while (startIdx < stations.size()
+        && stations
             .get(startIdx)
             .getId()
-            .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine())
-        && startIdx < stations.size()) startIdx++;
+            .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine()))
+      startIdx++;
     int skipped = 0;
     for (int i = startIdx + 1; i < stations.size(); i++) {
       // Exclude loops from linear vertex creation
+
       if (stations
           .get(i)
           .getId()
           .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine())) {
-        while (stations
+        while (i + 1 < stations.size()
+            && stations
                 .get(i + 1)
                 .getId()
-                .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine())
-            && i + 1 < stations.size()) i++;
+                .matches(GraphBuilderApplication.config.graphbuilder.train.getExcludeLine())) i++;
         startIdx = i + 1;
         currBranch = null;
         i++;
@@ -298,7 +306,14 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
         continue;
       }
 
-      for (String s : loop) if (!Utils.isInService(s)) continue;
+      boolean unavailableLoop = false;
+      for (String s : loop) {
+        if (!Utils.isInService(sgTime, s) || !idxs.containsKey(s)) {
+          unavailableLoop = true;
+          break;
+        }
+      }
+      if (unavailableLoop) continue;
 
       double speed = Utils.isLRT(loop[0]) ? mrtSpeed : lrtSpeed;
       double stopTime = Utils.isLRT(loop[0]) ? mrtStopTime : lrtStopTime;

@@ -12,20 +12,21 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CloudStorageHandler {
-  static final String dbPath =
-      GraphBuilderApplication.appengineDeployment ? "/tmp/graph.db" : "graph.db";
   static final String bucket = "sg-router.appspot.com";
-  static final String filename = "graph.db";
 
-  public static void uploadDB() {
+  public static void uploadDB(String dbPath) {
+    String dbName = dbPath;
+    dbPath = "dbs/" + dbPath;
+    if (GraphBuilderApplication.appengineDeployment) dbPath = "/tmp/" + dbPath;
+
     Storage store = StorageOptions.getDefaultInstance().getService();
-    BlobInfo bInf = BlobInfo.newBuilder(BlobId.of(bucket, filename)).build();
+    BlobInfo bInf = BlobInfo.newBuilder(BlobId.of(bucket, dbName)).build();
     try {
       store.create(bInf, Files.readAllBytes(Paths.get(dbPath)));
     } catch (IOException e) {
       log.error(e.getMessage());
     }
 
-    log.debug("Uploaded graph.db");
+    log.debug("Uploaded " + dbName);
   }
 }

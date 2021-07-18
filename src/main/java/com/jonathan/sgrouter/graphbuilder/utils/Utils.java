@@ -1,6 +1,5 @@
 package com.jonathan.sgrouter.graphbuilder.utils;
 
-import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import java.time.ZonedDateTime;
 
 public class Utils {
@@ -18,16 +17,14 @@ public class Utils {
         "(^BP\\d{1,2}$)|(^STC$)|(^PTC$)|(^SE\\d{1,2}$)|(^SW\\d{1,2}$)|(^PE\\d{1,2}$)|(^PW\\d{1,2}$)");
   }
 
-  public static boolean isInService(String s) {
-    ZonedDateTime dt = GraphBuilderApplication.sgNow;
+  public static boolean isInService(ZonedDateTime dt, String s) {
     if (Utils.isLRT(s)) return dt.getHour() >= 5 || dt.getHour() <= 1;
     if (dt.getHour() == 0) return dt.getMinute() <= 30;
     if (dt.getHour() >= 5) return dt.getHour() > 5 || dt.getMinute() >= 30;
     return false;
   }
 
-  public static double getFreq(double[] freq) {
-    ZonedDateTime dt = GraphBuilderApplication.sgNow;
+  public static double getFreq(ZonedDateTime dt, double[] freq) {
     if (dt.getHour() >= 19 || dt.getHour() < 6 || (dt.getHour() == 6 && dt.getHour() < 30))
       return freq[1];
     if (dt.getHour() >= 17) return freq[3];

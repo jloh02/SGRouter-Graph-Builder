@@ -4,7 +4,6 @@ import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -20,14 +19,24 @@ import org.springframework.web.server.ResponseStatusException;
 public class SQLiteHandler {
   Connection conn;
 
-  public SQLiteHandler() {
-    String filename = GraphBuilderApplication.appengineDeployment ? "/tmp/graph.db" : "graph.db";
-    try {
-      File oldDbFile = new File(filename);
-      if (oldDbFile.exists() && !oldDbFile.delete())
-        throw new IOException("Unable to delete graph.db");
+  static {
+    File dbFolder = new File("dbs");
 
-      this.conn = DataSource.getConnection();
+    if (dbFolder.exists()) {
+      for (String s : dbFolder.list()) {
+        File f = new File(dbFolder.getPath(), s);
+        if (!f.delete()) throw new RuntimeException("Unable to delete graph.db");
+      }
+    }
+
+    dbFolder.mkdirs();
+  }
+
+  public SQLiteHandler(String filename) {
+    filename = "dbs/" + filename;
+    if (GraphBuilderApplication.appengineDeployment) filename = "/tmp/" + filename;
+    try {
+      this.conn = DataSource.getConnection(filename);
       Statement s = conn.createStatement();
       s.execute(
           "CREATE TABLE IF NOT EXISTS nodes(src TEXT PRIMARY KEY, name TEXT, lat NUMERIC, lon"

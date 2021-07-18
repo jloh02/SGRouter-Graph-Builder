@@ -23,6 +23,7 @@ import org.geotools.referencing.GeodeticCalculator;
 import org.opengis.referencing.FactoryException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,72 +37,93 @@ public class GraphBuilderController {
 
   // SHA1 hash of generateGraph
   @GetMapping("74004ad79c7fcb8f4a22450b6f372c240bd09f49")
-  public boolean generateGraph() {
-    SQLiteHandler sqh = new SQLiteHandler();
-
-    ZonedDateTime serverNow = ZonedDateTime.now();
-    // serverNow = serverNow.withYear(2021).withDayOfYear(3).withHour(12).withMinute(0); // !Test
-    // Code
-    GraphBuilderApplication.sgNow = serverNow.withZoneSameInstant(ZoneId.of("Asia/Singapore"));
+  // Split request into 6 separate blocks of 4h to prevent execution time limit
+  public boolean generateGraph(@RequestParam int hLow, @RequestParam int hHigh) {
+    ZonedDateTime serverNow = ZonedDateTime.now().withSecond(0);
 
     GmapTiming[] timings = Calibration.calibrateSpeeds();
+
     DatastoreHandler.setWalkSpeed(timings[3].speed);
 
-    ExecutorService executor = Executors.newFixedThreadPool(2);
-    Future<ArrayList<Node>> busGraphFuture =
-        executor.submit(new BusGraphBuilder(sqh, timings[0].speed, timings[0].stopTime));
-    Future<ArrayList<Node>> trainGraphFuture =
-        executor.submit(
-            new TrainGraphBuilder(
-                sqh,
-                timings[1].speed,
-                timings[1].stopTime,
-                timings[2].speed,
-                timings[2].stopTime,
-                timings[3].speed));
+    for (int hour = hLow; hour < hHigh; hour++) {
+      for (int minute = 0; minute < 60; minute += 5) {
+        ZonedDateTime sgTime =
+            serverNow
+                .withZoneSameInstant(ZoneId.of("Asia/Singapore"))
+                .withHour(hour)
+                .withMinute(minute);
 
-    ArrayList<Node> busGraph, trainGraph;
-    try {
-      busGraph = busGraphFuture.get();
-      trainGraph = trainGraphFuture.get();
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Thread failed");
-    }
+        if (hour >= 2 && hour <= 4) continue;
 
-    // Train-Bus Vertices
-    ArrayList<Vertex> busTrainVtx = new ArrayList<>();
-    try {
-      GeodeticCalculator gc = new GeodeticCalculator(CRS.parseWKT(Utils.getLatLonWKT()));
-      for (Node bus : busGraph) {
-        for (Node train : trainGraph) {
-          gc.setStartingGeographicPoint(bus.getLon(), bus.getLat());
-          gc.setDestinationGeographicPoint(train.getLon(), train.getLat());
-          double dist = gc.getOrthodromicDistance() / 1000.0;
-          if (dist <= GraphBuilderApplication.config.graphbuilder.getMaximumBusTrainDist()) {
-            busTrainVtx.add(
-                new Vertex(
-                    bus.getSrcKey(),
-                    train.getSrcKey(),
-                    "Walk (Bus-Train)",
-                    dist / timings[3].speed));
-            busTrainVtx.add(
-                new Vertex(
-                    train.getSrcKey(),
-                    bus.getSrcKey(),
-                    "Walk (Train-Bus)",
-                    dist / timings[3].speed));
-          }
+        String dbName = String.format("graph_%d_%d.db", hour, minute);
+        SQLiteHandler sqh = new SQLiteHandler(dbName);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<ArrayList<Node>> busGraphFuture =
+            executor.submit(
+                new BusGraphBuilder(sqh, timings[0].speed, timings[0].stopTime, sgTime));
+        Future<ArrayList<Node>> trainGraphFuture =
+            executor.submit(
+                new TrainGraphBuilder(
+                    sqh,
+                    timings[1].speed,
+                    timings[1].stopTime,
+                    timings[2].speed,
+                    timings[2].stopTime,
+                    timings[3].speed,
+                    sgTime));
+
+        ArrayList<Node> busGraph, trainGraph;
+        try {
+          busGraph = busGraphFuture.get();
+          trainGraph = trainGraphFuture.get();
+        } catch (Exception e) {
+          log.error(e.getMessage());
+          throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Thread failed");
         }
-      }
-      sqh.addVertices(busTrainVtx);
-    } catch (FactoryException e) {
-      log.error(e.getMessage());
-    }
-    // Commit transactions to DB
-    sqh.commit();
 
-    CloudStorageHandler.uploadDB();
+        // Train-Bus Vertices
+        ArrayList<Vertex> busTrainVtx = new ArrayList<>();
+        try {
+          GeodeticCalculator gc = new GeodeticCalculator(CRS.parseWKT(Utils.getLatLonWKT()));
+          for (Node bus : busGraph) {
+            for (Node train : trainGraph) {
+              gc.setStartingGeographicPoint(bus.getLon(), bus.getLat());
+              gc.setDestinationGeographicPoint(train.getLon(), train.getLat());
+              double dist = gc.getOrthodromicDistance() / 1000.0;
+              if (dist <= GraphBuilderApplication.config.graphbuilder.getMaximumBusTrainDist()) {
+                busTrainVtx.add(
+                    new Vertex(
+                        bus.getSrcKey(),
+                        train.getSrcKey(),
+                        "Walk (Bus-Train)",
+                        dist / timings[3].speed));
+                busTrainVtx.add(
+                    new Vertex(
+                        train.getSrcKey(),
+                        bus.getSrcKey(),
+                        "Walk (Train-Bus)",
+                        dist / timings[3].speed));
+              }
+            }
+          }
+          sqh.addVertices(busTrainVtx);
+        } catch (FactoryException e) {
+          log.error(e.getMessage());
+        }
+        // Commit transactions to DB
+        sqh.commit();
+
+        CloudStorageHandler.uploadDB(dbName);
+
+        double done = (hour - hLow) * 12 + minute / 5 + 1;
+        double total = (hHigh - hLow) * 12;
+        log.debug(
+            String.format(
+                "-----------%.1f%% (%d/%d)-----------",
+                done / total * 100, (int) done, (int) total));
+      }
+    }
 
     return true;
   }
