@@ -26,6 +26,9 @@ public class SQLiteHandler {
     File f = new File(filename);
     if (f.exists() && !f.delete()) throw new RuntimeException("Unable to delete " + filename);
 
+    File par = f.getParentFile();
+    if (!par.exists()) par.mkdirs();
+
     try {
       this.conn = DataSource.getConnection(filename);
       Statement s = conn.createStatement();
