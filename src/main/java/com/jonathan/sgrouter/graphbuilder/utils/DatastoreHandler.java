@@ -19,7 +19,7 @@ public class DatastoreHandler {
   }
 
   public static void setWalkSpeed(double speed) {
-    if(walkSpeedSet) return;
+    if (walkSpeedSet) return;
     Key taskKey =
         datastore.newKeyFactory().setNamespace("sgrouter").setKind("constants").newKey("walkSpeed");
     Entity task = Entity.newBuilder(taskKey).set("value", speed).build();
@@ -38,5 +38,32 @@ public class DatastoreHandler {
       System.exit(1);
     }
     return "";
+  }
+
+  public static int getProgress() {
+    try {
+      Key taskKey =
+          datastore
+              .newKeyFactory()
+              .setNamespace("sgrouter")
+              .setKind("constants")
+              .newKey("graph-build-progress");
+      Entity retrieved = datastore.get(taskKey);
+      return Math.toIntExact(retrieved.getLong("value"));
+    } catch (Exception e) {
+      log.error(e.getMessage());
+    }
+    return 0;
+  }
+
+  public static void setProgress(long prog) {
+    Key taskKey =
+        datastore
+            .newKeyFactory()
+            .setNamespace("sgrouter")
+            .setKind("constants")
+            .newKey("graph-build-progress");
+    Entity task = Entity.newBuilder(taskKey).set("value", prog).build();
+    datastore.put(task);
   }
 }

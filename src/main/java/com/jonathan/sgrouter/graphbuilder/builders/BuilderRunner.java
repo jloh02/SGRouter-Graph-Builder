@@ -24,8 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 public class BuilderRunner {
-  public static void run(
-      ZonedDateTime serverNow, int hLow, int hHigh, int hour, int minute, GmapTiming walkGT) {
+  public static void run(ZonedDateTime serverNow, int hour, int minute, GmapTiming walkGT) {
     ZonedDateTime sgTime =
         serverNow
             .withZoneSameInstant(ZoneId.of("Asia/Singapore"))
@@ -33,7 +32,7 @@ public class BuilderRunner {
             .withMinute(minute);
 
     if (hour >= 2 && hour <= 4) {
-      printStatus(hLow, hHigh, hour, minute);
+      printStatus(hour, minute);
       return;
     }
 
@@ -98,12 +97,12 @@ public class BuilderRunner {
     // Commit transactions to DB
     sqh.commit();
     CloudStorageHandler.uploadDB(dbName);
-    printStatus(hLow, hHigh, hour, minute);
+    printStatus(hour, minute);
   }
 
-  static void printStatus(int hLow, int hHigh, int hour, int minute) {
-    double done = (hour - hLow) * 12 + minute / 5 + 1;
-    double total = (hHigh - hLow) * 12;
+  static void printStatus(int hour, int minute) {
+    double done = hour * 60 + minute + 5;
+    double total = 24 * 60;
     log.debug(
         String.format(
             "-----------%.1f%% (%d/%d)-----------", done / total * 100, (int) done, (int) total));
