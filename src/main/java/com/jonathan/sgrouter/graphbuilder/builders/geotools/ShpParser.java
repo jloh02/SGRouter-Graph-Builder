@@ -68,7 +68,7 @@ public class ShpParser {
                     .getNameToIds()
                     .get(name.toLowerCase());
           else {
-            log.debug(String.format("Unknown station: %s", name));
+            log.debug("Unknown station: {}", name);
             continue;
           }
         }

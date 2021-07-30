@@ -1,7 +1,9 @@
 package com.jonathan.sgrouter.graphbuilder.controllers;
 
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
+import com.jonathan.sgrouter.graphbuilder.utils.DatastoreHandler;
 import java.io.IOException;
+import java.util.Collections;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -32,16 +34,29 @@ public class CronFilter implements Filter {
 
     log.debug("App Engine Deployment: {}", GraphBuilderApplication.appengineDeployment);
 
+    log.debug(Collections.list(req.getHeaderNames()).toString());
     if (GraphBuilderApplication.appengineDeployment) {
       String cronHeader = req.getHeader("X-Appengine-Cron");
       if (cronHeader == null || !cronHeader.equals("true")) {
-        log.warn("Invalid cron request: {}", req);
+        log.error("Invalid cron request: {}", req);
         ((HttpServletResponse) response)
             .sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized to call this API");
         return;
       }
+
+      String retryHead = req.getHeader("X-Appengine-TaskRetryCount");
+      int retry = Integer.parseInt(retryHead);
+      log.debug("{} {}", retryHead, retry);
+      if (retry == 0) DatastoreHandler.setProgress(0);
+
+      String reason = req.getHeader("X-Appengine-TaskRetryReason");
+      if (reason != null) {
+        log.debug(reason);
+        log.debug(req.getHeader("X-Appengine-TaskPreviousResponse"));
+      }
     }
     chain.doFilter(request, response);
-    if (req.getParameter("hHigh") != null && req.getParameter("hHigh").equals("24")) System.exit(0);
+
+    System.exit(0);
   }
 }
