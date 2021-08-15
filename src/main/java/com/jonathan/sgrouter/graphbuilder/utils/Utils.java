@@ -1,6 +1,7 @@
 package com.jonathan.sgrouter.graphbuilder.utils;
 
 import java.time.ZonedDateTime;
+import org.locationtech.jts.geom.Coordinate;
 
 public class Utils {
 
@@ -30,6 +31,15 @@ public class Utils {
     if (dt.getHour() >= 17) return freq[3];
     if (dt.getHour() > 8 || (dt.getHour() == 8 && dt.getMinute() >= 30)) return freq[0];
     return freq[2];
+  }
+
+  // https://stackoverflow.com/questions/16266809/convert-from-latitude-longitude-to-x-y
+  static final double cosLat = 0.2169571866380666972; // cos(lat of SG) = cos(1.3521)
+  static final double r = 6378.1;
+
+  public static Coordinate approxXY(double lat, double lng) {
+    // return new Coordinate(r * lng * cosLat, r * lat);
+    return new Coordinate(lng * cosLat, lat);
   }
 
   public static String getLatLonWKT() {

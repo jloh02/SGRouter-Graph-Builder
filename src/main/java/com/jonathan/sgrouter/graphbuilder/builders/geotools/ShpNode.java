@@ -1,8 +1,10 @@
 package com.jonathan.sgrouter.graphbuilder.builders.geotools;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class ShpNode implements Comparable<ShpNode> {
   String id, name;
   double lat, lon;
@@ -14,13 +16,6 @@ public class ShpNode implements Comparable<ShpNode> {
     this.lon = n.getLon();
   }
 
-  public ShpNode(String id, String name, double lat, double lon) {
-    this.id = id;
-    this.name = name;
-    this.lat = lat;
-    this.lon = lon;
-  }
-
   @Override
   public int compareTo(ShpNode o) {
     String idA = this.id;
@@ -29,9 +24,4 @@ public class ShpNode implements Comparable<ShpNode> {
       return Integer.parseInt(idA.substring(2)) - Integer.parseInt(idB.substring(2));
     return idA.compareTo(idB);
   }
-
-  // @Override
-  // public String toString(){
-  // 	return String.format("%s (%f,%f): %s",id,lat,lon,name);
-  // }
 }

@@ -1,14 +1,11 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class BusRouteKey implements Comparable<BusRouteKey> {
   public String service;
   public int direction, stopSequence;
-
-  public BusRouteKey(String service, int direction, int stopSequence) {
-    this.service = service;
-    this.direction = direction;
-    this.stopSequence = stopSequence;
-  }
 
   public String toString() {
     return String.format("%s(%s):%s", service, direction, stopSequence);

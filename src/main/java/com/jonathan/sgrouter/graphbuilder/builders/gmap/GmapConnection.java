@@ -14,8 +14,8 @@ import com.google.maps.model.TravelMode;
 import com.google.maps.model.Unit;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import java.io.IOException;
-import java.time.Instant;
 import java.util.List;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -51,9 +51,8 @@ public class GmapConnection {
       String desPID,
       TransitMode mode,
       String serviceSearchStr,
-      GmapTiming defaultTiming,
-      Instant time) {
-    GmapData gdA = getTimingWithPid(srcPID, desPID, mode, serviceSearchStr, time);
+      GmapTiming defaultTiming) {
+    GmapData gdA = getTimingWithPid(srcPID, desPID, mode, serviceSearchStr);
     // log.trace(gdA.toString());
 
     if (gdA.isNull()) return new GmapTiming(defaultTiming.speed, defaultTiming.stopTime);
@@ -65,11 +64,7 @@ public class GmapConnection {
         i++) { // Between 50-90% of journey for 2nd destination node
       GmapData gdB =
           getTimingWithLatLng(
-              srcPID,
-              gdA.polyline.get(gdA.polyline.size() - 1 - jump * i),
-              mode,
-              serviceSearchStr,
-              time);
+              srcPID, gdA.polyline.get(gdA.polyline.size() - 1 - jump * i), mode, serviceSearchStr);
       // log.trace(gdB.toString());
 
       // Calculate stop time (Refer to MD file "gmap_stoptime_and_speed_calculation" for
@@ -97,7 +92,7 @@ public class GmapConnection {
   }
 
   private GmapData getTimingWithLatLng(
-      String srcPID, LatLng desLatLng, TransitMode mode, String searchStr, Instant t) {
+      String srcPID, LatLng desLatLng, TransitMode mode, String searchStr) {
     DirectionsApiRequest req =
         DirectionsApi.newRequest(ctx)
             .mode(TravelMode.TRANSIT)
@@ -106,13 +101,12 @@ public class GmapConnection {
             .transitMode(mode)
             .transitRoutingPreference(TransitRoutingPreference.FEWER_TRANSFERS)
             .originPlaceId(srcPID)
-            .destination(desLatLng)
-            .departureTime(t);
+            .destination(desLatLng);
     return getTimingAbstract(req, mode, searchStr);
   }
 
   private GmapData getTimingWithPid(
-      String srcPID, String desPID, TransitMode mode, String searchStr, Instant t) {
+      String srcPID, String desPID, TransitMode mode, String searchStr) {
     DirectionsApiRequest req =
         DirectionsApi.newRequest(ctx)
             .mode(TravelMode.TRANSIT)
@@ -121,8 +115,7 @@ public class GmapConnection {
             .transitMode(mode)
             .transitRoutingPreference(TransitRoutingPreference.FEWER_TRANSFERS)
             .originPlaceId(srcPID)
-            .destinationPlaceId(desPID)
-            .departureTime(t);
+            .destinationPlaceId(desPID);
     return getTimingAbstract(req, mode, searchStr);
   }
 
@@ -179,6 +172,7 @@ public class GmapConnection {
   }
 }
 
+@ToString
 class GmapData {
   public int stops = -1;
   public List<LatLng> polyline = null;
@@ -201,10 +195,5 @@ class GmapData {
 
   public boolean isNull() {
     return stops == -1 || polyline == null;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("{stops=%d, distance=%f km, time=%f min}", stops, distance, time);
   }
 }

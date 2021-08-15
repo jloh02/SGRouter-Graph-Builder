@@ -1,11 +1,11 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
 import lombok.AllArgsConstructor;
-import lombok.ToString;
+import lombok.Data;
 
-@ToString
+@Data
 @AllArgsConstructor
-public class BusStop {
-  public String description;
-  public double lat, lon;
+public class TrafficSpeedBand {
+  String location;
+  double minSpeed, maxSpeed;
 }

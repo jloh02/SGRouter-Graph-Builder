@@ -1,8 +1,6 @@
 package com.jonathan.sgrouter.graphbuilder.builders;
 
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
-import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
-import com.jonathan.sgrouter.graphbuilder.calibration.Calibration;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.models.Vertex;
 import com.jonathan.sgrouter.graphbuilder.utils.CloudStorageHandler;
@@ -24,37 +22,19 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 public class BuilderRunner {
-  public static void run(ZonedDateTime serverNow, int hour, int minute, GmapTiming walkGT) {
-    ZonedDateTime sgTime =
-        serverNow
-            .withZoneSameInstant(ZoneId.of("Asia/Singapore"))
-            .withHour(hour)
-            .withMinute(minute);
+  public static void run(ZonedDateTime serverNow, double walkSpeed) {
+    ZonedDateTime sgTime = serverNow.withZoneSameInstant(ZoneId.of("Asia/Singapore"));
 
-    if (hour >= 2 && hour <= 4) {
-      printStatus(hour, minute);
-      return;
-    }
+    int hour = sgTime.getHour();
+    if (hour >= 2 && hour <= 4) return;
 
-    GmapTiming[] timings = Calibration.calibrateSpeeds(sgTime, walkGT);
-    DatastoreHandler.setWalkSpeed(timings[3].speed);
-
-    String dbName = String.format("graph_%d_%d.db", hour, minute);
+    String dbName = "graph.db";
     SQLiteHandler sqh = new SQLiteHandler(dbName);
 
     ExecutorService executor = Executors.newFixedThreadPool(2);
-    Future<ArrayList<Node>> busGraphFuture =
-        executor.submit(new BusGraphBuilder(sqh, timings[0].speed, timings[0].stopTime, sgTime));
+    Future<ArrayList<Node>> busGraphFuture = executor.submit(new BusGraphBuilder(sqh, sgTime));
     Future<ArrayList<Node>> trainGraphFuture =
-        executor.submit(
-            new TrainGraphBuilder(
-                sqh,
-                timings[1].speed,
-                timings[1].stopTime,
-                timings[2].speed,
-                timings[2].stopTime,
-                timings[3].speed,
-                sgTime));
+        executor.submit(new TrainGraphBuilder(sqh, walkSpeed, sgTime));
 
     ArrayList<Node> busGraph, trainGraph;
     try {
@@ -77,16 +57,10 @@ public class BuilderRunner {
           if (dist <= GraphBuilderApplication.config.graphbuilder.getMaximumBusTrainDist()) {
             busTrainVtx.add(
                 new Vertex(
-                    bus.getSrcKey(),
-                    train.getSrcKey(),
-                    "Walk (Bus-Train)",
-                    dist / timings[3].speed));
+                    bus.getSrcKey(), train.getSrcKey(), "Walk (Bus-Train)", dist / walkSpeed));
             busTrainVtx.add(
                 new Vertex(
-                    train.getSrcKey(),
-                    bus.getSrcKey(),
-                    "Walk (Train-Bus)",
-                    dist / timings[3].speed));
+                    train.getSrcKey(), bus.getSrcKey(), "Walk (Train-Bus)", dist / walkSpeed));
           }
         }
       }
@@ -97,14 +71,6 @@ public class BuilderRunner {
     // Commit transactions to DB
     sqh.commit();
     CloudStorageHandler.uploadDB(dbName);
-    printStatus(hour, minute);
-  }
-
-  static void printStatus(int hour, int minute) {
-    double done = hour * 60 + minute + 5;
-    double total = 24 * 60;
-    log.debug(
-        String.format(
-            "-----------%.1f%% (%d/%d)-----------", done / total * 100, (int) done, (int) total));
+    DatastoreHandler.setLastModTiming();
   }
 }

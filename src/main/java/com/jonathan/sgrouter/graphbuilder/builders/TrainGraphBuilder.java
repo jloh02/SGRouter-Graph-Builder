@@ -3,6 +3,9 @@ package com.jonathan.sgrouter.graphbuilder.builders;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.datamall.DatamallSHP;
 import com.jonathan.sgrouter.graphbuilder.builders.geotools.ShpNode;
+import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
+import com.jonathan.sgrouter.graphbuilder.calibration.CalibMap;
+import com.jonathan.sgrouter.graphbuilder.calibration.Calibration;
 import com.jonathan.sgrouter.graphbuilder.models.BranchInfo;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.models.Vertex;
@@ -32,12 +35,16 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
 
   static ArrayList<ShpNode> stationsImport = DatamallSHP.getSHP("TrainStation");
   static ArrayList<ShpNode> exitsImport = DatamallSHP.getSHP("TrainStationExit");
+  static CalibMap timings;
 
   SQLiteHandler sqh;
-  double mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime, walkSpeed;
+  double walkSpeed;
   ZonedDateTime sgTime;
 
   public ArrayList<Node> call() { // MRT speed in km per minute
+    /*----------------------Speed Calibration----------------------*/
+    timings = Calibration.calibrateSpeeds();
+
     ArrayList<ShpNode> stations = new ArrayList<>(stationsImport);
     ArrayList<ShpNode> exits = new ArrayList<>(exitsImport);
 
@@ -60,12 +67,10 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       geoCalc = new GeodeticCalculator(CRS.parseWKT(Utils.getLatLonWKT()));
 
       setupData(stations, idxs, stationsBaseName, srcList);
-      setupAndGenerateBranches(
-          branches, stations, idxs, vtxList, mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime);
-      generateLines(
-          stations, idxs, vtxList, branches, mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime);
+      setupAndGenerateBranches(branches, stations, idxs, vtxList);
+      generateLines(stations, idxs, vtxList, branches);
       generateInterchanges(stations, stationsBaseName, vtxList, walkSpeed);
-      generateLoops(stations, idxs, vtxList, mrtSpeed, mrtStopTime, lrtSpeed, lrtStopTime);
+      generateLoops(stations, idxs, vtxList);
     } catch (FactoryException e) {
       log.error(e.getMessage());
     }
@@ -126,25 +131,20 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       HashMap<String, BranchInfo> branches,
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
-      ArrayList<Vertex> vtxList,
-      double mrtSpeed,
-      double mrtStopTime,
-      double lrtSpeed,
-      double lrtStopTime) {
+      ArrayList<Vertex> vtxList) {
     for (BranchConfig bc : GraphBuilderApplication.config.graphbuilder.train.getBranches()) {
       if (!idxs.containsKey(bc.getSrc()) || !idxs.containsKey(bc.getDes())) continue;
+
+      GmapTiming gt = timings.get(bc.getSrc());
+      double trainSpeed = gt.speed, trainStopTime = gt.stopTime;
+
       double branchDist =
-          Utils.isLRT(bc.getSrc())
-              ? BuilderUtils.getDistance(
-                          stations.get(idxs.get(bc.getBranchNode())),
-                          stations.get(idxs.get(bc.getSrc())))
-                      / lrtSpeed
-                  + lrtStopTime
-              : BuilderUtils.getDistance(
-                          stations.get(idxs.get(bc.getBranchNode())),
-                          stations.get(idxs.get(bc.getSrc())))
-                      / mrtSpeed
-                  + mrtStopTime;
+          BuilderUtils.getDistance(
+                      stations.get(idxs.get(bc.getBranchNode())),
+                      stations.get(idxs.get(bc.getSrc())))
+                  / trainSpeed
+              + trainStopTime;
+
       branchDist += bc.getTransferTime();
       vtxList.add(
           new Vertex(
@@ -154,10 +154,10 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       for (int i = idxs.get(bc.getSrc()) + 1; i <= idxs.get(bc.getDes()); i++) {
         double dist =
             Utils.isLRT(bc.getSrc())
-                ? BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / lrtSpeed
-                    + lrtStopTime
-                : BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / mrtSpeed
-                    + mrtStopTime;
+                ? BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / trainSpeed
+                    + trainStopTime
+                : BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / trainSpeed
+                    + trainStopTime;
 
         vtxList.add(
             new Vertex(
@@ -185,11 +185,7 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       ArrayList<ShpNode> stations,
       HashMap<String, Integer> idxs,
       ArrayList<Vertex> vtxList,
-      HashMap<String, BranchInfo> branches,
-      double mrtSpeed,
-      double mrtStopTime,
-      double lrtSpeed,
-      double lrtStopTime) {
+      HashMap<String, BranchInfo> branches) {
 
     int startIdx = 0;
 
@@ -232,9 +228,11 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
           .substring(0, 2)
           .equals(stations.get(startIdx).getId().substring(0, 2))) {
 
-        double edgeDist = BuilderUtils.getDistance(stations.get(j), stations.get(i));
-        if (Utils.isLRT(stations.get(i).getId())) edgeDist = edgeDist / lrtSpeed + lrtStopTime;
-        else edgeDist = edgeDist / mrtSpeed + mrtStopTime;
+        GmapTiming gt = timings.get(stations.get(i).getId());
+        double trainSpeed = gt.speed, trainStopTime = gt.stopTime;
+
+        double edgeDist =
+            BuilderUtils.getDistance(stations.get(j), stations.get(i)) / trainSpeed + trainStopTime;
 
         if (GraphBuilderApplication.config
             .graphbuilder
@@ -293,13 +291,7 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
 
   // Loops in LRTs
   void generateLoops(
-      ArrayList<ShpNode> stations,
-      HashMap<String, Integer> idxs,
-      ArrayList<Vertex> vtxList,
-      double mrtSpeed,
-      double mrtStopTime,
-      double lrtSpeed,
-      double lrtStopTime) {
+      ArrayList<ShpNode> stations, HashMap<String, Integer> idxs, ArrayList<Vertex> vtxList) {
     for (String[] loop : GraphBuilderApplication.config.graphbuilder.train.getLoops()) {
       if (loop.length != 3 && loop.length != 4) {
         log.error("Invalid loop: " + Arrays.toString(loop));
@@ -315,8 +307,8 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       }
       if (unavailableLoop) continue;
 
-      double speed = Utils.isLRT(loop[0]) ? mrtSpeed : lrtSpeed;
-      double stopTime = Utils.isLRT(loop[0]) ? mrtStopTime : lrtStopTime;
+      GmapTiming gt = timings.get(loop[0]);
+      double trainSpeed = gt.speed, trainStopTime = gt.stopTime;
 
       TrainServiceName tsn = serviceMap.get(loop[1].substring(0, 2));
 
@@ -333,7 +325,8 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
       } else if (loop.length == 4) {
         for (int i = idxs.get(loop[0]) + 1; i <= idxs.get(loop[1]); i++) {
           double dist =
-              BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / speed + stopTime;
+              BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / trainSpeed
+                  + trainStopTime;
           vtxList.add(
               new Vertex(
                   stations.get(i).getId(),
@@ -350,13 +343,14 @@ public class TrainGraphBuilder implements Callable<ArrayList<Node>> {
 
         ShpNode a = stations.get(idxs.get(loop[1]));
         ShpNode b = stations.get(idxs.get(loop[2]));
-        double transdist = BuilderUtils.getDistance(a, b) / speed + stopTime;
+        double transdist = BuilderUtils.getDistance(a, b) / trainSpeed + trainStopTime;
         vtxList.add(new Vertex(a.getId(), b.getId(), tsn.ascending, transdist));
         vtxList.add(new Vertex(b.getId(), a.getId(), tsn.descending, transdist));
 
         for (int i = idxs.get(loop[2]) + 1; i <= idxs.get(loop[3]); i++) {
           double dist =
-              BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / speed + stopTime;
+              BuilderUtils.getDistance(stations.get(i), stations.get(i - 1)) / trainSpeed
+                  + trainStopTime;
           vtxList.add(
               new Vertex(
                   stations.get(i).getId(), stations.get(i - 1).getId(), tsn.ascending, dist));

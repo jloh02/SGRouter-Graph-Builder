@@ -1,46 +1,78 @@
 package com.jonathan.sgrouter.graphbuilder.calibration;
 
+import com.google.maps.model.TransitMode;
 import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapTiming;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import com.jonathan.sgrouter.graphbuilder.builders.gmap.GmapWorker;
+import java.util.HashSet;
+import java.util.Map.Entry;
 
-@Slf4j
 public class Calibration {
-  public static GmapTiming[] calibrateSpeeds(ZonedDateTime zdt, GmapTiming walkGT) {
+  public static CalibMap calibrateSpeeds() {
 
-    GmapTiming[] timings = new GmapTiming[4]; // Bus,Mrt,Lrt,Walk
+    CalibMap op = new CalibMap();
 
-    Instant inst = zdt.toInstant();
+    GmapWorker gw = new GmapWorker();
+    gw.setTransitMode(TransitMode.SUBWAY);
 
-    ExecutorService executor = Executors.newFixedThreadPool(3);
-    Future<GmapTiming> busTiming = executor.submit(new CalibBus(inst));
-    Future<GmapTiming> mrtTiming = executor.submit(new CalibMrt(inst));
-    Future<GmapTiming> lrtTiming = executor.submit(new CalibLrt(inst));
-    try {
-      timings[0] = busTiming.get();
-      timings[1] = mrtTiming.get();
-      timings[2] = lrtTiming.get();
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      throw new ResponseStatusException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "Thread failed: Unable to calibrate timings");
-    }
-
-    timings[3] = walkGT;
+    /*------------------------------------------ MRT SPEED ------------------------------------------*/
+    // DT Line: Bukit Panjang → Upper Changi
+    // NS Line: Bukit Batok → Marina South Pier
+    // EW Line: Bedok → Tuas Link
+    // CC Line: Lorong Chuan → HarbourFront
+    // NE Line: Punggol → HarbourFront
+    /*-----------------------------------------------------------------------------------------------*/
+    gw.setDefaultTiming(new GmapTiming(GraphBuilderApplication.config.graphbuilder.train.getMrt()));
+    op.put(
+        "DT", gw.getTiming("ChIJARt1T4kR2jERTyE-4kybHC4", "ChIJtcq9et882jERXFLqMR93eiw", "Expo"));
+    op.put(
+        "NS",
+        gw.getTiming(
+            "ChIJy37FHD8Q2jERQrs731bZT5Y", "ChIJq0GQRB8Z2jERfz0GTv95OQg", "Marina South Pier"));
+    op.put(
+        "EW",
+        gw.getTiming("ChIJl_Hgw9oj2jERYhgt4z-6OwI", "ChIJsadYyEwP2jERL7SpvzQCd5Q", "Tuas Link"));
+    op.put(
+        "CC",
+        gw.getTiming(
+            "ChIJK2ewIQkX2jERNNpWkYHNPDk", "ChIJwZI-B-Ib2jERG0UqkScDu7s", "Harbour Front"));
+    op.put(
+        "NE",
+        gw.getTiming(
+            "ChIJB9fWN-MV2jER0btc565fpUA", "ChIJwZI-B-Ib2jERG0UqkScDu7s", "Harbour Front"));
 
     // Speed factor to account for differences between gmap and graph distance
     // In trains, straight line vs actual route distance
-    timings[0].speed *= GraphBuilderApplication.config.graphbuilder.bus.getSpeedFactor();
-    timings[1].speed *= GraphBuilderApplication.config.graphbuilder.train.mrt.getSpeedFactor();
-    timings[2].speed *= GraphBuilderApplication.config.graphbuilder.train.lrt.getSpeedFactor();
+    HashSet<String> processed = new HashSet<>();
+    for (Entry<String, GmapTiming> ent : op.entrySet()) {
+      processed.add(ent.getKey());
+      ent.getValue().speed *=
+          GraphBuilderApplication.config.graphbuilder.train.mrt.getSpeedFactor();
+    }
 
-    return timings;
+    /*------------------------------------------ LRT SPEED ------------------------------------------*/
+    // STC: Thanggam → Sengkang
+    // PTC: Riviera → Punggol
+    // BP LRT: Choa Chu Kang → Bukit Panjang
+    /*-----------------------------------------------------------------------------------------------*/
+    gw.setDefaultTiming(new GmapTiming(GraphBuilderApplication.config.graphbuilder.train.getLrt()));
+    op.put(
+        "ST",
+        gw.getTiming("ChIJ3TdadkoX2jERFPpqYTr14uA", "ChIJW8xBftIX2jER0iArkCKzqZ8", "Sengkang"));
+    op.put(
+        "PT",
+        gw.getTiming("ChIJrSYX8Pg92jERCBdEFSd-FGU", "ChIJB9fWN-MV2jER0btc565fpUA", "Punggol"));
+    op.put(
+        "BP",
+        gw.getTiming(
+            "ChIJf-qKBzYR2jERPCaE21v1ssk", "ChIJD58--UkR2jERMi5sKsqSqko", "Bukit Panjang"));
+
+    for (Entry<String, GmapTiming> ent : op.entrySet()) {
+      if (processed.contains(ent.getKey())) continue;
+      ent.getValue().speed *=
+          GraphBuilderApplication.config.graphbuilder.train.lrt.getSpeedFactor();
+    }
+
+    return op;
   }
 }
