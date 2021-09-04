@@ -1,5 +1,6 @@
 package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 
+
 public class BusServiceKey implements Comparable<BusServiceKey> {
   public String src, dest, service;
   public int direction;

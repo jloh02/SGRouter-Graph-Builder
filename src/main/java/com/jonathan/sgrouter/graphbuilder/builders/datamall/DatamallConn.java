@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class DatamallBus<T1, T2> implements Callable<HashMap<T1, T2>> {
+public abstract class DatamallConn<T1, T2> implements Callable<HashMap<T1, T2>> {
   HashMap<T1, T2> output;
 
   abstract String initDatamallType();

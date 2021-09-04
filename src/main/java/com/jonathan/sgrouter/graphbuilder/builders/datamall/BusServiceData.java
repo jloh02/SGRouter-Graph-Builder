@@ -3,7 +3,7 @@ package com.jonathan.sgrouter.graphbuilder.builders.datamall;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-public class BusServiceData extends DatamallBus<BusServiceKey, BusService> {
+public class BusServiceData extends DatamallConn<BusServiceKey, BusService> {
   @Override
   String initDatamallType() {
     return "BusServices";

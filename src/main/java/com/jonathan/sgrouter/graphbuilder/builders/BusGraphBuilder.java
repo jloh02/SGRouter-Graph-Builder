@@ -1,5 +1,6 @@
 package com.jonathan.sgrouter.graphbuilder.builders;
 
+import com.jonathan.sgrouter.graphbuilder.GraphBuilderApplication;
 import com.jonathan.sgrouter.graphbuilder.builders.datamall.*;
 import com.jonathan.sgrouter.graphbuilder.models.Node;
 import com.jonathan.sgrouter.graphbuilder.models.Vertex;
@@ -24,31 +25,35 @@ import org.springframework.web.server.ResponseStatusException;
 @AllArgsConstructor
 public class BusGraphBuilder implements Callable<ArrayList<Node>> {
   SQLiteHandler sqh;
-  double busSpeed, busStopTime;
   ZonedDateTime sgTime;
 
   static HashMap<String, BusStop> importedBusStops;
   static HashMap<BusServiceKey, BusService> importedBusServices;
   static HashMap<BusRouteKey, BusRoute> importedBusRoutes;
+  static HashMap<Integer, TrafficSpeedBand> trafficSpeeds;
 
   static ArrayList<String> sortedBusStops;
   static ArrayList<BusServiceKey> sortedBusServices;
   static ArrayList<BusRouteKey> sortedBusRoutes;
 
   public ArrayList<Node> call() { // Bus speed in km per minute
+
     if (importedBusStops
         == null) { // Only run once to improve performance and prevent redundant querying
       /*----------------------Import data from Datamall----------------------*/
-      ExecutorService executor = Executors.newFixedThreadPool(3);
+      ExecutorService executor = Executors.newFixedThreadPool(4);
       Future<HashMap<String, BusStop>> busStopFuture = executor.submit(new BusStopData());
       Future<HashMap<BusServiceKey, BusService>> busServiceFuture =
           executor.submit(new BusServiceData());
       Future<HashMap<BusRouteKey, BusRoute>> busRouteFuture = executor.submit(new BusRouteData());
+      Future<HashMap<Integer, TrafficSpeedBand>> trafficFuture =
+          executor.submit(new TrafficSpeed());
 
       try {
         importedBusStops = busStopFuture.get();
         importedBusServices = busServiceFuture.get();
         importedBusRoutes = busRouteFuture.get();
+        trafficSpeeds = trafficFuture.get();
       } catch (Exception e) {
         log.error(e.getMessage());
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Thread failed");
@@ -67,7 +72,6 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
       // if(!s.service.matches("^(\\d{1,3}[ABCEGMNRWXe]?)|(NR\\d)|(CT8)|(CT18)"))
       // log.trace(s);
       // log.trace("----------------");
-
       /*----------------------Generate list of sorted keys for iteration----------------------*/
       sortedBusStops = new ArrayList<>(importedBusStops.keySet());
       Collections.sort(sortedBusStops);
@@ -88,6 +92,23 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
       double f = Utils.getFreq(sgTime, s.getFreqArr());
       if (f > 0) freqList.put(k.service, f);
     }
+
+    /*----------------------Generate list of roads for traffic speeds----------------------*/
+    SpatialIndex.create(trafficSpeeds);
+
+    /*roads = new ArrayList<>();
+    for (TrafficSpeedBand t : trafficSpeeds.values()) {
+      String[] coords = t.getLocation().split(" ");
+      if (t.getMaxSpeed() >= 60) t.setMaxSpeed(60);
+      if (t.getMinSpeed() >= 60) t.setMinSpeed(60);
+      roads.add(
+          new Road(
+              Utils.approxXY(Double.parseDouble(coords[0]), Double.parseDouble(coords[1])),
+              Utils.approxXY(Double.parseDouble(coords[2]), Double.parseDouble(coords[3])),
+              (t.getMinSpeed() + t.getMaxSpeed())
+                  * 0.5
+                  * GraphBuilderApplication.config.graphbuilder.bus.getSpeedFactor()));
+    }*/
 
     /*----------------------Generate bus adjacency list----------------------*/
     HashSet<String> srcList = new HashSet<>();
@@ -134,8 +155,34 @@ public class BusGraphBuilder implements Callable<ArrayList<Node>> {
         BusRouteKey desRouteKey = sortedBusRoutes.get(i + 1);
         BusRoute desRouteData = importedBusRoutes.get(desRouteKey);
 
+        // Get closest road speeds
+        BusStop src = importedBusStops.get(srcRouteData.src);
+        BusStop des = importedBusStops.get(desRouteData.src);
+
+        if (srcRouteData.src.equals(desRouteData.src)) continue;
+        if (Double.isNaN(srcRouteData.distance) || Double.isNaN(desRouteData.distance)) continue;
+
+        double busSpeed =
+            (SpatialIndex.query(src.lat, src.lon) + SpatialIndex.query(des.lat, des.lon)) * 0.5;
+
+        // double busSpeed = getBusSpeed(Utils.approxXY(src.lat, src.lon), Utils.approxXY(des.lat,
+        // des.lon));
+
         if (!Utils.isBusStop(desRouteData.src)) continue;
-        double travelTime = (desRouteData.distance - srcRouteData.distance) / busSpeed;
+        double travelTime =
+            (desRouteData.distance - srcRouteData.distance) / busSpeed
+                + GraphBuilderApplication.config.graphbuilder.bus.getDefaultStopTime();
+
+        // if (busSpeed / 0.016666666666 > 40) {
+        //   log.info(
+        //       "\n{} - {}\n{} - {}\n{} {}",
+        //       srcRouteKey,
+        //       srcRouteData,
+        //       desRouteKey,
+        //       desRouteData,
+        //       busSpeed / 0.016666666666,
+        //       travelTime);
+        // }
 
         vtxList.add(
             new Vertex(srcRouteData.src, desRouteData.src, srcRouteKey.service, travelTime));

@@ -8,6 +8,7 @@ logging:
     org.springframework: INFO
     com.zaxxer.hikari: WARN
     com.google.cloud: WARN
+    com.google.maps.internal: WARN
     
 gmap:
   local-api-key: "AIzaSyAfTaASVC0uiAlXFTpJaaLlJt_5T4G9Slo"
@@ -16,8 +17,8 @@ graphbuilder:
   maximum-bus-train-dist: 0.3
   default-walking-speed: 0.08
   bus:
-    default-speed: 0.37
-    default-stop-time: 0
+    default-speed: 0.55
+    default-stop-time: 0.3
     speed-factor: 1.0
   train:
     mrt:

@@ -1,5 +1,6 @@
 package com.jonathan.sgrouter.graphbuilder.utils;
 
+import com.google.cloud.Timestamp;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
@@ -40,30 +41,14 @@ public class DatastoreHandler {
     return "";
   }
 
-  public static int getProgress() {
-    try {
-      Key taskKey =
-          datastore
-              .newKeyFactory()
-              .setNamespace("sgrouter")
-              .setKind("constants")
-              .newKey("graph-build-progress");
-      Entity retrieved = datastore.get(taskKey);
-      return Math.toIntExact(retrieved.getLong("value"));
-    } catch (Exception e) {
-      log.error(e.getMessage());
-    }
-    return 0;
-  }
-
-  public static void setProgress(long prog) {
+  public static void setLastModTiming() {
     Key taskKey =
         datastore
             .newKeyFactory()
             .setNamespace("sgrouter")
             .setKind("constants")
-            .newKey("graph-build-progress");
-    Entity task = Entity.newBuilder(taskKey).set("value", prog).build();
+            .newKey("graph-last-modified");
+    Entity task = Entity.newBuilder(taskKey).set("value", Timestamp.now()).build();
     datastore.put(task);
   }
 }
