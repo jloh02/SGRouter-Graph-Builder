@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
+// TODO build nodes lookup using spatial index
 @SpringBootApplication
 public class GraphBuilderApplication {
   public static boolean appengineDeployment;

@@ -9,11 +9,17 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+/** Static class to handle retrieval of key-value pairs from Google Datastore */
 public class DatastoreHandler {
-  static final HashMap<String, String> values = new HashMap<>();
-  static final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-  static boolean walkSpeedSet = false;
+  private static final HashMap<String, String> values = new HashMap<>();
+  private static final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+  private static boolean walkSpeedSet = false;
 
+  /**
+   * Retrieves values from Google Cloud Datastore with the namespace
+   * @param name    the key
+   * @return        a @link{java.lang.String} value 
+   */
   public static String getValue(String name) {
     if (values.containsKey(name)) return values.get(name);
     return getKey(name);
@@ -28,7 +34,7 @@ public class DatastoreHandler {
     walkSpeedSet = true;
   }
 
-  static String getKey(String name) {
+  private static String getKey(String name) {
     try {
       Key taskKey = datastore.newKeyFactory().setNamespace("sgrouter").setKind("keys").newKey(name);
       Entity retrieved = datastore.get(taskKey);

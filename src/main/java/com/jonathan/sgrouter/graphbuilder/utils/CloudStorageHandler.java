@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+/** Static class to handle uploading of database to Google Cloud Storage */
 public class CloudStorageHandler {
   static final String bucket = "sg-router.appspot.com";
 
